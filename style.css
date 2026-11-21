@@ -1,3 +1,6 @@
+@font-face{font-family:Tajawal;src:url(tajawal-regular.woff) format("woff");font-weight:400;font-display:swap}
+@font-face{font-family:Tajawal;src:url(tajawal-medium.woff) format("woff");font-weight:500 600;font-display:swap}
+@font-face{font-family:Tajawal;src:url(tajawal-bold.woff) format("woff");font-weight:700 900;font-display:swap}
 :root{--ink:#251f21;--ink2:#585254;--line:#eae9ea;--teal:#73a89a;--sand:#f4efec;--red:#ed313e}
 *{box-sizing:border-box}
 body{margin:0;background:#fff;color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
@@ -149,3 +152,12 @@ h3{color:var(--ink2)}
 .draft .top{align-items:center}.draft .top span:nth-child(2){flex:1}.draft .ic{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:color-mix(in srgb,var(--c) 24%,transparent);color:var(--c)}.list li .ic,.brow .ic{color:var(--c)}.brow .ic{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--c) 24%,transparent);flex:none}.brow .n{flex:1}
 .list li.inc .v{color:#4ade80}.dayhead{flex-wrap:wrap;align-items:center}
 #b-list .bar{flex:none;min-height:8px;height:8px;margin:2px 0}#b-list li.ent>div{flex:none}
+
+body,button,input,select,textarea{font-family:Tajawal,system-ui,"Noto Naskh Arabic",sans-serif}
+body{font-size:16px;line-height:1.55}
+h1{font-size:34px;font-weight:700}h2{font-weight:700;font-size:22px}
+.big{font-weight:700;font-size:26px}
+#mic{font-weight:500}
+.list .n,.list .v,.dayhead .n,.dayhead .v{font-weight:500}
+button,.file{font-weight:500}
+button.primary{font-weight:700}

@@ -130,9 +130,9 @@ function range(period, offset, now = Date.now()) {
   else { from = new Date(d.getFullYear(), d.getMonth() + offset, 1); to = new Date(from.getFullYear(), from.getMonth() + 1, 1); }
   return [from.getTime(), to.getTime()];
 }
-const nf = new Intl.NumberFormat('ar-EG', { maximumFractionDigits: 2 });
+const nf = new Intl.NumberFormat('ar-EG-u-nu-latn', { maximumFractionDigits: 2 });
 const egp = n => nf.format(Math.round(n * 100) / 100) + ' جنيه';
-const fmtDate = (t, o) => new Date(t).toLocaleDateString('ar-EG', o);
+const fmtDate = (t, o) => new Date(t).toLocaleDateString('ar-EG-u-nu-latn', o);
 function plabel(period, from, to) {
   if (period === 'day') return fmtDate(from, { weekday: 'long', day: 'numeric', month: 'long' });
   if (period === 'week') return fmtDate(from, { day: 'numeric', month: 'short' }) + ' إلى ' + fmtDate(to - 1, { day: 'numeric', month: 'short' });
@@ -177,7 +177,7 @@ function entryRow(e) {
     render();
   };
   const sign = isInc(e) ? '+ ' : '';
-  const when = new Date(e.ts).toLocaleString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  const when = new Date(e.ts).toLocaleString('ar-EG-u-nu-latn', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   const row = li(e.note || catName(e), catName(e) + ' · ' + ACCTS[e.acct || 0] + ' · ' + when, sign + egp(e.amount), b);
   if (isInc(e)) row.classList.add('inc');
   row.classList.add('ent'); row.style.setProperty('--c', catCo(e.cat, isInc(e)));
@@ -212,7 +212,7 @@ function renderDays(now) {
     const top = [...catPer[i].entries()].sort((a, b) => b[1] - a[1])[0];
     if (v === 0) b.className = 'zero'; else b.style.background = catCo(top[0]);
     const k = dayKey(new Date(fd.getFullYear(), fd.getMonth(), i + 1, 12).getTime());
-    c.setAttribute('aria-label', (i + 1).toLocaleString('ar-EG') + ': ' + egp(v) + (top ? '، أكتر فئة ' + (settings.cats[top[0]] || '') : ''));
+    c.setAttribute('aria-label', (i + 1).toLocaleString('ar-EG-u-nu-latn') + ': ' + egp(v) + (top ? '، أكتر فئة ' + (settings.cats[top[0]] || '') : ''));
     if (openDay === k) c.classList.add('sel');
     c.onclick = () => { openDay = openDay === k ? null : k; render(); const t = document.querySelector('.dayitem.open'); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'center' }); };
     c.appendChild(b); ch.appendChild(c);
@@ -242,7 +242,7 @@ function renderReports(now) {
   const cl = settings.cats.map((c, i) => ({ c, i, v: sum(ex.filter(e => e.cat === i)) })).filter(x => x.v > 0).sort((a, b) => b.v - a.v);
   if (selCat !== null && !cl.some(x => x.i === selCat)) selCat = null;
   cl.forEach(x => {
-    const row = li(x.c, Math.round(x.v / total * 100).toLocaleString('ar-EG') + '٪ من المصروفات', egp(x.v)); row.classList.add('withbar', 'tap', 'ent'); row.style.setProperty('--c', catCo(x.i)); row.prepend(icon(x.i));
+    const row = li(x.c, Math.round(x.v / total * 100).toLocaleString('ar-EG-u-nu-latn') + '٪ من المصروفات', egp(x.v)); row.classList.add('withbar', 'tap', 'ent'); row.style.setProperty('--c', catCo(x.i)); row.prepend(icon(x.i));
     row.appendChild(bar(x.v / total, false, catCo(x.i)));
     row.tabIndex = 0; row.setAttribute('role', 'button'); row.setAttribute('aria-pressed', selCat === x.i ? 'true' : 'false'); if (selCat === x.i) row.classList.add('sel');
     const go = () => { selCat = selCat === x.i ? null : x.i; render(); }; row.onclick = go; row.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } };
@@ -258,7 +258,7 @@ function renderReports(now) {
   if (!cats.children.length) cats.appendChild(li('مفيش مصروفات في الفترة دي', '', ''));
   const top = $('r-top'); top.textContent = ''; const g = new Map();
   (selCat === null ? ex : ex.filter(e => e.cat === selCat)).forEach(e => { const k = norm(e.note || '').trim() || '(من غير وصف)'; const o = g.get(k) || { name: e.note || catName(e), v: 0, n: 0 }; o.v += e.amount; o.n++; g.set(k, o); });
-  [...g.values()].sort((a, b) => b.v - a.v).slice(0, 5).forEach(o => top.appendChild(li(o.name, o.n.toLocaleString('ar-EG') + ' مرة', egp(o.v))));
+  [...g.values()].sort((a, b) => b.v - a.v).slice(0, 5).forEach(o => top.appendChild(li(o.name, o.n.toLocaleString('ar-EG-u-nu-latn') + ' مرة', egp(o.v))));
   if (!top.children.length) top.appendChild(li('لسه مفيش', '', ''));
   const ac = $('r-accts'); ac.textContent = '';
   ACCTS.forEach((a, i) => {
@@ -279,7 +279,7 @@ function renderBudget() {
     if (settings.budgets[i]) inp.value = settings.budgets[i];
     inp.onchange = () => { const v = parseFloat(inp.value); if (isFinite(v) && v > 0 && v < MAX_AMOUNT) settings.budgets[i] = v; else delete settings.budgets[i]; saveSettings(); render(); };
     top.appendChild(inp); row.appendChild(top);
-    if (s) { row.appendChild(bar(s.frac, s.frac > 1, catCo(i))); row.appendChild(el('div', 'd' + (s.frac > 1 ? ' danger' : ''), `${s.frac > 1 ? 'تحذير: ' : ''}صرفت ${egp(s.spent)} من ${egp(s.lim)} (${Math.round(s.frac * 100).toLocaleString('ar-EG')}٪)`)); }
+    if (s) { row.appendChild(bar(s.frac, s.frac > 1, catCo(i))); row.appendChild(el('div', 'd' + (s.frac > 1 ? ' danger' : ''), `${s.frac > 1 ? 'تحذير: ' : ''}صرفت ${egp(s.spent)} من ${egp(s.lim)} (${Math.round(s.frac * 100).toLocaleString('ar-EG-u-nu-latn')}٪)`)); }
     ul.appendChild(row);
   });
   const gl = $('g-list'); gl.textContent = '';
@@ -297,13 +297,13 @@ function renderBudget() {
 }
 function renderSettings() {
   const last = Number(localStorage.getItem('lastBackup') || 0);
-  $('store').textContent = `${entries.length.toLocaleString('ar-EG')} حركة محفوظة على الجهاز ده. ` +
+  $('store').textContent = `${entries.length.toLocaleString('ar-EG-u-nu-latn')} حركة محفوظة على الجهاز ده. ` +
     (persisted === true ? 'المتصفح وافق يحافظ على البيانات.' : persisted === false ? 'المتصفح لسه مضمنش إن البيانات مش هتتمسح لو المساحة قلت.' : '');
   const days = last ? Math.floor((Date.now() - last) / 86400000) : null; const b = $('backup');
   if (!entries.length) { b.textContent = ''; b.className = 'muted'; }
   else if (days === null) { b.textContent = 'مفيش نسخة احتياطية لحد دلوقتي. لو مسحت بيانات التطبيق أو غيّرت الموبايل البيانات هتضيع.'; b.className = 'warn'; }
-  else if (days >= 7) { b.textContent = `آخر نسخة احتياطية من ${days.toLocaleString('ar-EG')} يوم.`; b.className = 'warn'; }
-  else { b.textContent = 'آخر نسخة احتياطية: ' + new Date(last).toLocaleDateString('ar-EG'); b.className = 'muted'; }
+  else if (days >= 7) { b.textContent = `آخر نسخة احتياطية من ${days.toLocaleString('ar-EG-u-nu-latn')} يوم.`; b.className = 'warn'; }
+  else { b.textContent = 'آخر نسخة احتياطية: ' + new Date(last).toLocaleDateString('ar-EG-u-nu-latn'); b.className = 'muted'; }
   const cl = $('c-list'); cl.textContent = '';
   settings.cats.forEach((c, i) => {
     const inp = el('input'); inp.value = c; inp.maxLength = 20; inp.setAttribute('aria-label', 'اسم الفئة'); inp.className = 'catname';
@@ -314,7 +314,7 @@ function renderSettings() {
 function renderAlerts() {
   const a = $('alerts'); const hot = budgetStatus().filter(s => s.frac >= 0.8).sort((x, y) => y.frac - x.frac);
   if (!hot.length) { a.hidden = true; a.textContent = ''; return; }
-  a.hidden = false; a.textContent = hot.map(s => (s.frac > 1 ? 'عدّيت ميزانية ' : 'قربت توصل حد ') + settings.cats[s.i] + ` (${Math.round(s.frac * 100).toLocaleString('ar-EG')}٪)`).join(' · ');
+  a.hidden = false; a.textContent = hot.map(s => (s.frac > 1 ? 'عدّيت ميزانية ' : 'قربت توصل حد ') + settings.cats[s.i] + ` (${Math.round(s.frac * 100).toLocaleString('ar-EG-u-nu-latn')}٪)`).join(' · ');
 }
 function render() {
   const now = Date.now(); const [f, t] = range('day', 0, now);
@@ -364,7 +364,7 @@ function renderDrafts() {
       const e = { id: uid(), ts: Math.min(base + i, t + i), amount: x.amount, cat: x.cat, note: x.note };
       if (x.type === 'inc') e.type = 'inc'; if (x.acct) e.acct = x.acct; return e;
     });
-    try { await putMany(add); entries = entries.concat(add); drafts = null; $('input').value = ''; setMsg(`اتحفظ ${add.length.toLocaleString('ar-EG')} في الجهاز.`); renderDrafts(); render(); }
+    try { await putMany(add); entries = entries.concat(add); drafts = null; $('input').value = ''; setMsg(`اتحفظ ${add.length.toLocaleString('ar-EG-u-nu-latn')} في الجهاز.`); renderDrafts(); render(); }
     catch { setMsg('الحفظ فشل ومفيش حاجة اتحفظت. جرّب تاني.', true); s.disabled = false; }
   };
   box.appendChild(s);
@@ -524,8 +524,8 @@ $('imp').onchange = async ev => {
     const good = list.filter(e => validEntry(e, settings.cats.length)).map(e => { const o = { id: e.id, ts: e.ts, amount: e.amount, cat: e.cat, note: e.note.slice(0, 120) }; if (e.type === 'inc') o.type = 'inc'; if (e.acct) o.acct = e.acct; return o; });
     const have = new Set(entries.map(e => e.id)); const fresh = good.filter(e => !have.has(e.id) && have.add(e.id));
     await putMany(fresh); entries = entries.concat(fresh); render();
-    setMsg(`اتضاف ${fresh.length.toLocaleString('ar-EG')} حركة جديدة، وتجاهلت ${(list.length - fresh.length).toLocaleString('ar-EG')} (متكررة أو مش صالحة).`);
-    if (tab === 'set') $('backup').textContent = `اتضاف ${fresh.length.toLocaleString('ar-EG')} حركة جديدة، وتجاهلت ${(list.length - fresh.length).toLocaleString('ar-EG')} (متكررة أو مش صالحة).`;
+    setMsg(`اتضاف ${fresh.length.toLocaleString('ar-EG-u-nu-latn')} حركة جديدة، وتجاهلت ${(list.length - fresh.length).toLocaleString('ar-EG-u-nu-latn')} (متكررة أو مش صالحة).`);
+    if (tab === 'set') $('backup').textContent = `اتضاف ${fresh.length.toLocaleString('ar-EG-u-nu-latn')} حركة جديدة، وتجاهلت ${(list.length - fresh.length).toLocaleString('ar-EG-u-nu-latn')} (متكررة أو مش صالحة).`;
   } catch { setMsg('الملف مش نسخة احتياطية صالحة، ومفيش حاجة اتغيّرت.', true); if (tab === 'set') $('backup').textContent = 'الملف مش نسخة احتياطية صالحة، ومفيش حاجة اتغيّرت.'; }
 };
 
