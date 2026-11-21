@@ -200,6 +200,12 @@ function renderHome(now) {
   const [f, t] = range('day', 0, now); const d = entries.filter(inRange(f, t)).sort((a, b) => b.ts - a.ts);
   $('home-sum').textContent = d.length ? 'صرفت ' + egp(sum(expOf(d))) + (incOf(d).length ? ' · دخل ' + egp(sum(incOf(d))) : '') : 'لسه مسجلتش حاجة النهارده';
   $('home-sum').className = d.length ? 'big' : 'big empty';
+  { const [mf, mt] = range('month', 0, Date.now()); const mm = expOf(entries.filter(inRange(mf, mt)));
+    $('ring-amt').textContent = egp(sum(mm));
+    const bs = budgetStatus(); const lim = bs.reduce((s, x) => s + x.lim, 0), sp = bs.reduce((s, x) => s + x.spent, 0);
+    const ringEl = $('ring');
+    if (lim > 0) { const fr = sp / lim; ringEl.style.setProperty('--p', Math.min(100, Math.round(fr * 100)) + '%'); ringEl.classList.toggle('over', fr > 1); $('ring-pct').textContent = Math.round(fr * 100).toLocaleString('ar-EG-u-nu-latn') + '٪'; $('ring-sub').textContent = (fr > 1 ? 'تحذير: عدّيت ميزانيتك بـ ' + egp(sp - lim) : 'فاضل ' + egp(lim - sp) + ' من ميزانية الفئات المحددة'); }
+    else { ringEl.style.setProperty('--p', '0%'); $('ring-pct').textContent = '—'; $('ring-sub').textContent = 'حدد ميزانية لفئة عشان الحلقة تظهر.'; } }
   const ul = $('home-list'); ul.textContent = ''; d.forEach(e => ul.appendChild(entryRow(e)));
 }
 function renderDays(now) {
@@ -329,7 +335,7 @@ function render() {
   const now = Date.now(); const [f, t] = range('day', 0, now);
   $('today').textContent = 'النهارده: ' + egp(sum(expOf(entries.filter(inRange(f, t)))));
   document.querySelectorAll('.tab').forEach(x => x.hidden = x.id !== 'tab-' + tab);
-  document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
+  document.querySelectorAll('#tabs button[data-t]').forEach(b => b.classList.toggle('on', b.dataset.t === tab));
   renderAlerts();
   if (tab === 'home') renderHome(now); else if (tab === 'days') renderDays(now); else if (tab === 'rep') renderReports(now);
   else if (tab === 'bud') renderBudget(); else renderSettings();
@@ -387,7 +393,7 @@ $('parse').onclick = () => {
   drafts = d; setMsg(''); renderDrafts();
 };
 $('input').oninput = () => { if (drafts) { drafts = null; renderDrafts(); } };
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; armed = null; selCat = null; render(); window.scrollTo(0, 0); });
+document.querySelectorAll('#tabs button[data-t]').forEach(b => b.onclick = () => { tab = b.dataset.t; armed = null; selCat = null; render(); window.scrollTo(0, 0); });
 $('d-prev').onclick = () => { dOffset--; openDay = null; render(); };
 $('d-next').onclick = () => { if (dOffset < 0) { dOffset++; openDay = null; render(); } };
 document.querySelectorAll('#tab-rep .seg button').forEach(b => b.onclick = () => { rPeriod = b.dataset.p; rOffset = 0; selCat = null; render(); });
@@ -486,6 +492,17 @@ async function receiptFlow(file) {
 }
 $('rcpt').onclick = () => $('rfile').click();
 $('rfile').onchange = () => { const f = $('rfile').files[0]; $('rfile').value = ''; if (f) receiptFlow(f); };
+
+// ---------- action sheet ----------
+const sheet = $('sheet'); let lastFocus = null;
+function openSheet() { lastFocus = document.activeElement; sheet.hidden = false; $('sh-voice').focus(); }
+function closeSheet() { sheet.hidden = true; if (lastFocus) lastFocus.focus(); }
+$('plus').onclick = openSheet; $('sh-x').onclick = closeSheet; $('sh-bg').onclick = closeSheet;
+sheet.addEventListener('keydown', ev => { if (ev.key === 'Escape') closeSheet(); });
+function goHome() { tab = 'home'; armed = null; selCat = null; render(); window.scrollTo(0, 0); }
+$('sh-voice').onclick = () => { sheet.hidden = true; goHome(); $('mic').click(); };
+$('sh-rcpt').onclick = () => { sheet.hidden = true; goHome(); $('rcpt').click(); };
+$('sh-type').onclick = () => { sheet.hidden = true; goHome(); $('typed').open = true; $('input').focus(); };
 async function cloudVoice() {
   if (mrec && mrec.state === 'recording') { mrec.stop(); return; }
   try { mstream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
