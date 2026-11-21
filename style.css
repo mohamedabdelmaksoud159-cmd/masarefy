@@ -62,3 +62,14 @@ input,select{font:inherit;font-size:16px;padding:8px;border:1px solid var(--line
 #b-list li{gap:4px}
 #home-sum.big,#d-total.big{font-size:20px}
 .big.empty{font-size:16px}
+
+.hint{color:var(--ink2);font-size:12px;margin:6px 0 0}
+.list li.tap{cursor:pointer}
+.draft{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0;box-shadow:0 1px 3px rgba(37,31,33,.06)}
+.draft .top{font-size:16px}
+.draft .top span:last-child{color:var(--teal)}
+textarea#input{min-height:96px;border-radius:12px;font-size:18px;border-width:1.5px}
+button.primary{border-radius:12px;min-height:50px;font-size:16px}
+.card{border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(37,31,33,.06)}
+.card b{font-size:17px}
+h3{margin-top:24px}

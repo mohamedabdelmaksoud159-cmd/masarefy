@@ -13,7 +13,7 @@ const KEYWORDS = [
   ['كورس','كتاب','تعليم','دراسه','مدرسه','جامعه'],
 ];
 const INCOME_WORDS = ['قبضت','قبض','مرتب','راتب','استلمت','دخل','جالي','اتحوللي','حولولي','هديه','عيديه','مكافاه','ربح','ايراد'];
-const INC_SALARY = ['مرتب','راتب','قبضت','قبض'], INC_GIFT = ['هديه','عيديه','مكافاه'];
+const INC_SALARY = ['مرتب','راتب'], INC_GIFT = ['هديه','عيديه','مكافاه'];
 const ACCT_WORDS = [[], ['بنك','فيزا','كارت','ماستر','انستاباي','تحويل'], ['محفظه','فودافون','اورنج','اتصالات','ويي']];
 const WORDS = {
   واحد:1,اتنين:2,اثنين:2,تلاته:3,ثلاثه:3,اربعه:4,خمسه:5,خمس:5,سته:6,ست:6,سبعه:7,تمانيه:8,ثمانيه:8,تسعه:9,عشره:10,عشر:10,
@@ -28,7 +28,7 @@ const DB_NAME = 'expenses-db', STORE = 'entries';
 const SETTINGS_KEY = 'masarefy-settings';
 
 // ---------- settings ----------
-let settings = { cats: DEFAULT_CATS.slice(), budgets: {}, goals: [] };
+let settings = { cats: DEFAULT_CATS.slice(), budgets: {}, goals: [], opening: {} };
 function loadSettings() {
   try {
     const s = JSON.parse(localStorage.getItem(SETTINGS_KEY) || 'null');
@@ -42,7 +42,9 @@ function sanitizeSettings(s) {
   if (s.budgets && typeof s.budgets === 'object') for (const [k, v] of Object.entries(s.budgets)) { const i = Number(k); if (Number.isInteger(i) && i >= 0 && i < cats.length && Number.isFinite(v) && v > 0 && v < MAX_AMOUNT) budgets[i] = v; }
   const goals = Array.isArray(s.goals) ? s.goals.filter(g => g && typeof g.id === 'string' && typeof g.name === 'string' && Number.isFinite(g.target) && g.target > 0 && g.target < MAX_AMOUNT && Number.isFinite(g.saved) && g.saved >= 0)
     .slice(0, 30).map(g => ({ id: g.id.slice(0, 64), name: g.name.slice(0, 40), target: g.target, saved: g.saved })) : [];
-  return { cats: cats.slice(0, 40), budgets, goals };
+  const opening = {};
+  if (s.opening && typeof s.opening === 'object') for (const [k, v] of Object.entries(s.opening)) { const i = Number(k); if (Number.isInteger(i) && i >= 0 && i < ACCTS.length && Number.isFinite(v) && Math.abs(v) < MAX_AMOUNT) opening[i] = v; }
+  return { cats: cats.slice(0, 40), budgets, goals, opening };
 }
 const saveSettings = () => { try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch {} };
 
@@ -64,7 +66,7 @@ function parseSegment(tokens, daysAgo) {
   const rest = norm(noteTokens.join(' ')), all = norm(tokens.join(' '));
   const inc = INCOME_WORDS.some(k => all.split(/\s+/).some(w => w === k || w === 'ال' + k));
   let cat = DEFAULT_CATS.length - 1;
-  if (inc) cat = INC_SALARY.some(k => all.includes(k)) ? 0 : INC_GIFT.some(k => all.includes(k)) ? 1 : 2;
+  if (inc) cat = INC_GIFT.some(k => all.includes(k)) ? 1 : INC_SALARY.some(k => all.includes(k)) ? 0 : 2;
   else outer: for (let i = 0; i < KEYWORDS.length; i++) for (const k of KEYWORDS[i]) if (rest.includes(k)) { cat = i; break outer; }
   let acct = 0;
   for (let a = 1; a < ACCT_WORDS.length; a++) if (ACCT_WORDS[a].some(k => all.includes(k))) { acct = a; break; }
@@ -73,17 +75,21 @@ function parseSegment(tokens, daysAgo) {
 }
 function lineDaysAgo(toks) {
   const ns = toks.map(norm);
-  for (let i = 0; i < ns.length; i++) if (ns[i] === 'امبارح' || ns[i] === 'امس') return ns[i - 1] === 'اول' ? 2 : 1;
-  return 0;
+  for (let i = 0; i < ns.length; i++) {
+    if (ns[i] === 'امبارح' || ns[i] === 'امس') return ns[i - 1] === 'اول' ? 2 : 1;
+    if (['النهارده', 'انهارده', 'اليوم'].includes(ns[i])) return 0;
+  }
+  return null;
 }
 function parseText(text) {
-  const out = [];
+  const out = []; let carry = 0;
   for (const line of text.split(/[\n,،;؛]+/)) {
     let toks = line.split(/\s+/).filter(Boolean);
-    const daysAgo = lineDaysAgo(toks);
+    const found = lineDaysAgo(toks), assumed = found === null && carry > 0;
+    const daysAgo = found === null ? carry : found; carry = daysAgo;
     if (daysAgo === 2) toks = toks.filter((t, i) => !(norm(t) === 'اول' && ['امبارح', 'امس'].includes(norm(toks[i + 1] || ''))));
     let cur = [], hasAmt = false, prevNum = false;
-    const flush = () => { const d = parseSegment(cur, daysAgo); if (d) out.push(d); };
+    const flush = () => { const d = parseSegment(cur, daysAgo); if (d) { if (assumed) d.assumed = true; out.push(d); } };
     for (const t of toks) {
       const n = norm(t);
       if (n.startsWith('و') && !NOT_WAW.has(n) && hasAmt) {
@@ -219,7 +225,13 @@ function renderReports(now) {
   [...g.values()].sort((a, b) => b.v - a.v).slice(0, 5).forEach(o => top.appendChild(li(o.name, o.n.toLocaleString('ar-EG') + ' مرة', egp(o.v))));
   if (!top.children.length) top.appendChild(li('لسه مفيش', '', ''));
   const ac = $('r-accts'); ac.textContent = '';
-  ACCTS.forEach((a, i) => { const mine = entries.filter(e => (e.acct || 0) === i); if (mine.length) ac.appendChild(li(a, 'دخل − مصروفات', egp(sum(incOf(mine)) - sum(expOf(mine))))); });
+  ACCTS.forEach((a, i) => {
+    const mine = entries.filter(e => (e.acct || 0) === i), op = settings.opening[i], net = sum(incOf(mine)) - sum(expOf(mine));
+    if (!mine.length && op === undefined) return;
+    const row = op === undefined ? li(a, 'حركة صافية مسجلة (دخل − مصروفات). اضغط وحط رصيد البداية', egp(net)) : li(a, 'رصيد = رصيد البداية ' + egp(op) + ' + الحركة المسجلة ' + egp(net), egp(op + net));
+    row.classList.add('tap'); row.onclick = () => { const v = prompt('رصيد البداية في ' + a + ' (جنيه). سيبه فاضي لو مش عايز.', op === undefined ? '' : op); if (v === null) return; const n = parseFloat(norm(v)); if (v.trim() === '') delete settings.opening[i]; else if (isFinite(n) && Math.abs(n) < MAX_AMOUNT) settings.opening[i] = n; saveSettings(); render(); };
+    ac.appendChild(row);
+  });
   if (!ac.children.length) ac.appendChild(li('لسه مفيش حركة', '', ''));
 }
 function renderBudget() {
@@ -302,7 +314,9 @@ function renderDrafts() {
     date.onchange = () => { const p = date.value.split('-').map(Number); d.date = p.length === 3 && p[0] ? new Date(p[0], p[1] - 1, p[2], 12).getTime() : null; };
     if (d.date === undefined) d.date = null;
     const grid = el('div', 'grid'); grid.append(type, cat, acct, date);
-    row.append(top, amt, grid); box.appendChild(row);
+    row.append(top, amt, grid);
+    if (d.assumed) row.appendChild(el('p', 'hint', 'التاريخ اتاخد من «امبارح» اللي قبله في الكلام. راجعه لو غلط.'));
+    box.appendChild(row);
   });
   box.appendChild(el('p', 'muted', 'البنود من غير مبلغ مش هتتحفظ.'));
   const s = el('button', 'primary', 'احفظ'); s.id = 'save'; s.type = 'button'; s.disabled = !drafts.some(x => x.amount !== null);
@@ -345,11 +359,14 @@ $('c-add').onclick = () => {
 // voice
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null, listening = false;
-if (!SR) { $('mic').disabled = true; $('voice-note').textContent = 'المتصفح ده مفيهوش تعرّف على الكلام. اكتب، أو استعمل ميكروفون الكيبورد.'; }
-else $('voice-note').textContent = 'الصوت بيتحوّل لكتابة عن طريق خدمة التعرف على الكلام في المتصفح، وبيحتاج إنترنت، وممكن الصوت يتبعت لشركة المتصفح. راجع النص قبل الحفظ.';
-$('mic').onclick = () => {
-  if (!SR) return;
-  if (listening && rec) { rec.stop(); return; }
+if (!SR && !window.MediaRecorder) { $('mic').disabled = true; $('voice-note').textContent = 'المتصفح ده مفيهوش تعرّف على الكلام. اكتب، أو استعمل ميكروفون الكيبورد.'; }
+else $('voice-note').textContent = 'من غير الرمز السري: الصوت بيتحوّل لكتابة عن طريق خدمة التعرف على الكلام في المتصفح، وبيحتاج إنترنت، وممكن الصوت يتبعت لشركة المتصفح. راجع النص قبل الحفظ.';
+const AI_URL = 'https://masarefy-ai.mohamedabdelmaksoud159.workers.dev/stt';
+const PC_KEY = 'masarefy_voice_pc';
+const getPC = () => { try { return localStorage.getItem(PC_KEY) || ''; } catch { return ''; } };
+let mrec = null, mstream = null, mchunks = [];
+function srStart() {
+  if (!SR) { setMsg('الصوت السحابي مش شغال والمتصفح مفيهوش تعرّف. اكتب بإيدك.', true); return; }
   rec = new SR(); rec.lang = 'ar-EG'; rec.interimResults = true; rec.continuous = false;
   const base = $('input').value ? $('input').value.trim() + ' ' : '';
   rec.onstart = () => { listening = true; $('mic').classList.add('rec'); $('miclbl').textContent = 'وقّف'; setMsg('بسمعك…'); };
@@ -357,7 +374,44 @@ $('mic').onclick = () => {
   rec.onerror = ev => { const m = { 'not-allowed': 'المتصفح مش مدّي إذن الميكروفون.', 'service-not-allowed': 'خدمة الصوت مش متاحة هنا.', 'no-speech': 'مسمعتش حاجة.', 'network': 'خدمة الصوت محتاجة إنترنت.', 'audio-capture': 'مفيش ميكروفون شغال.' }; setMsg(m[ev.error] || 'الصوت فشل (' + ev.error + ').', true); };
   rec.onend = () => { listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم'; if ($('input').value.trim()) { if ($('msg').textContent === 'بسمعك…') setMsg('اتكتب. راجع النص واضغط افهم.'); } };
   try { rec.start(); } catch { setMsg('معرفتش أشغّل الميكروفون.', true); }
+}
+async function cloudVoice() {
+  if (mrec && mrec.state === 'recording') { mrec.stop(); return; }
+  try { mstream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
+  catch { setMsg('المتصفح مش مدّي إذن الميكروفون.', true); return; }
+  mchunks = [];
+  mrec = new MediaRecorder(mstream);
+  const base = $('input').value ? $('input').value.trim() + ' ' : '';
+  mrec.ondataavailable = e => { if (e.data && e.data.size) mchunks.push(e.data); };
+  mrec.onstart = () => { listening = true; $('mic').classList.add('rec'); $('miclbl').textContent = 'وقّف'; setMsg('بسمعك… اضغط وقّف لما تخلص.'); };
+  mrec.onstop = async () => {
+    listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم';
+    mstream.getTracks().forEach(t => t.stop());
+    const blob = new Blob(mchunks, { type: mrec.mimeType || 'audio/webm' });
+    if (blob.size < 1000) { setMsg('مسمعتش حاجة. جرّب تاني.', true); return; }
+    setMsg('بكتب اللي قلته…');
+    try {
+      const r = await fetch(AI_URL, { method: 'POST', headers: { 'X-Passcode': getPC(), 'Content-Type': blob.type }, body: blob });
+      if (r.status === 401) { setMsg('الرمز السري غلط. صحّحه من «بياناتك».', true); return; }
+      if (!r.ok) { setMsg('الصوت السحابي مش متاح دلوقتي (' + r.status + '). اكتب أو جرّب تاني.', true); return; }
+      const j = await r.json(); const t = (j.text || '').trim();
+      if (!t) { setMsg('مسمعتش كلام واضح. جرّب تاني.', true); return; }
+      $('input').value = base + t; setMsg('اتكتب. راجع النص واضغط افهم.');
+    } catch { setMsg('مفيش اتصال بخدمة الصوت. اكتب أو جرّب تاني.', true); }
+  };
+  mrec.start();
+}
+$('mic').onclick = () => {
+  if (listening && rec) { rec.stop(); return; }
+  if (getPC() && window.MediaRecorder && navigator.mediaDevices) { cloudVoice(); return; }
+  srStart();
 };
+$('pc-save').onclick = () => {
+  const v = $('pc').value.trim();
+  try { if (v) localStorage.setItem(PC_KEY, v); else localStorage.removeItem(PC_KEY); } catch {}
+  $('pc').value = ''; $('pc-state').textContent = getPC() ? 'الصوت الذكي شغال على الجهاز ده.' : 'الصوت الذكي مقفول. بيستعمل تعرّف المتصفح.';
+};
+$('pc-state').textContent = getPC() ? 'الصوت الذكي شغال على الجهاز ده.' : 'الصوت الذكي مقفول. بيستعمل تعرّف المتصفح.';
 
 // export / import
 function download(name, mime, text) {
