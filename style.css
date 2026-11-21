@@ -1,0 +1,32 @@
+:root{--ink:#251f21;--ink2:#585254;--line:#eae9ea;--teal:#73a89a;--sand:#f4efec;--red:#ed313e}
+*{box-sizing:border-box}
+body{margin:0;background:#fff;color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
+main{max-width:640px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 20px 40px}
+h1{font-size:30px;margin:8px 0 0}h2{font-size:21px;margin:32px 0 12px}h3{font-size:15px;margin:20px 0 4px;color:var(--ink2)}
+.today{color:var(--teal);font-weight:600;margin:0}
+.muted{color:var(--ink2);font-size:13px;margin:8px 0}
+textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:6px;color:var(--ink);background:#fff;resize:vertical}
+button,.file{font:inherit;min-height:44px;padding:0 16px;border-radius:6px;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer}
+button.primary{background:var(--ink);color:#fff;border-color:var(--ink);flex:1}
+button.secondary,.file{background:#fff}
+button:disabled{opacity:.4}
+button.rec{background:var(--red);color:#fff;border-color:var(--red)}
+.row{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.row button{flex:1}
+.file{display:block;margin-top:8px;text-align:center;line-height:44px;padding:0}.file input{display:none}
+.seg{display:flex;gap:8px}.seg button{flex:1}.seg button.on{background:var(--teal);color:#fff;border-color:var(--teal)}
+.nav{display:flex;align-items:center;justify-content:space-between;margin:12px 0;gap:8px}.nav strong{text-align:center;flex:1}
+.nav button{min-width:80px}
+.big{font-size:28px;font-weight:700;margin:8px 0}
+.list{list-style:none;padding:0;margin:0}
+.list li{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+.list .n{font-weight:600}.list .d{color:var(--ink2);font-size:12px}.list .v{font-weight:600;white-space:nowrap}
+.list .x{min-height:36px;padding:0 10px;font-size:12px}
+.draft{padding:10px 0;border-top:1px solid var(--line)}
+.draft .top{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.draft select,.draft input{font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:6px;margin-top:6px;width:100%}
+.warn{background:var(--sand);padding:10px 12px;border-radius:8px;font-size:13px;margin:8px 0}
+.danger{color:var(--red)}
+footer{margin-top:32px}
+
+.big.empty{font-size:16px;font-weight:400;color:var(--ink2)}
+button svg{vertical-align:-3px;margin-inline-start:4px}

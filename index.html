@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#73a89a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>مصاريفي</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>مصاريفي</h1>
+    <p id="today" class="today"></p>
+  </header>
+
+  <section aria-labelledby="h-add">
+    <h2 id="h-add">سجّل مصروف</h2>
+    <textarea id="input" rows="3" dir="rtl" lang="ar" placeholder="صرفت ٨٠ مواصلات و١٢٠ أكل" aria-label="المصروف"></textarea>
+    <div class="row">
+      <button id="mic" type="button" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg> <span id="miclbl">تكلّم</span></button>
+      <button id="parse" type="button" class="primary">افهم المصاريف</button>
+    </div>
+    <p id="voice-note" class="muted"></p>
+    <div id="drafts" hidden></div>
+    <p id="msg" role="status" class="muted"></p>
+  </section>
+
+  <section aria-labelledby="h-tot">
+    <h2 id="h-tot">الإجمالي</h2>
+    <div class="seg" role="group" aria-label="الفترة">
+      <button type="button" data-p="day" class="on">اليوم</button>
+      <button type="button" data-p="week">الأسبوع</button>
+      <button type="button" data-p="month">الشهر</button>
+    </div>
+    <div class="nav">
+      <button type="button" id="prev" aria-label="الفترة السابقة">‹ السابق</button>
+      <strong id="plabel"></strong>
+      <button type="button" id="next" aria-label="الفترة التالية">التالي ›</button>
+    </div>
+    <p id="total" class="big"></p>
+    <ul id="cats" class="list"></ul>
+    <h3>المصاريف</h3>
+    <ul id="entries" class="list"></ul>
+  </section>
+
+  <section aria-labelledby="h-data">
+    <h2 id="h-data">بياناتك</h2>
+    <p id="store" class="muted"></p>
+    <div class="row">
+      <button id="exp-json" type="button" class="secondary">نسخة احتياطية (JSON)</button>
+      <button id="exp-csv" type="button" class="secondary">تصدير Excel (CSV)</button>
+    </div>
+    <label class="file secondary">استرجاع نسخة<input id="imp" type="file" accept=".json,application/json"></label>
+    <p id="backup" class="muted"></p>
+  </section>
+  <footer class="muted">الأرقام بالجنيه المصري. البيانات محفوظة على الجهاز ده بس.</footer>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
