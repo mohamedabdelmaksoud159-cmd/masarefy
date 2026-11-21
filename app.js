@@ -347,6 +347,7 @@ function selectOf(label, opts, val, on) {
   opts.forEach((c, k) => { const o = el('option', '', c); o.value = k; if (k === val) o.selected = true; s.appendChild(o); });
   s.onchange = () => on(Number(s.value)); return s;
 }
+function revealSave() { const s = $('save'); if (s) setTimeout(() => s.scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth' }), 60); }
 function renderDrafts() {
   const box = $('drafts'); box.textContent = '';
   if (!drafts) { box.hidden = true; return; }
@@ -458,7 +459,7 @@ async function understand2(text) {
   let d = await aiDrafts(text), how = 'ai';
   if (!d) { d = parseText(text); how = 'local'; }
   if (!d.length) { drafts = null; renderDrafts(); setMsg('مفهمتش مبلغ في الكلام ده. جرّب: مواصلات ٨٠ وأكل ١٢٠', true); return; }
-  drafts = d; renderDrafts();
+  drafts = d; renderDrafts(); revealSave();
   const dr = how === 'ai' && d.dropped ? ' في ' + d.dropped + ' بند مفهمتوش، اكتبهم بإيدك.' : '';
   setMsg(how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : 'فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.');
 }
@@ -486,7 +487,7 @@ async function receiptFlow(file) {
     const da = j.daysAgo === null || j.daysAgo === undefined ? NaN : Math.round(Number(j.daysAgo)); if (!(da >= 0 && da <= 60) && !flags.includes('date')) flags.push('date');
     if (!ok && !flags.includes('total')) flags.push('total');
     drafts = [{ amount: ok ? total : null, cat: cat >= 0 ? cat : OTHER, type: 'exp', acct: 0, daysAgo: da >= 0 && da <= 60 ? da : 0, note: String(j.merchant || 'فاتورة').slice(0, 60), ai: true, unsure: flags, receipt: true }];
-    renderDrafts(); setMsg('قريت الفاتورة بالذكاء الاصطناعي. راجع الإجمالي والتاريخ والفئة قبل ما تحفظ.');
+    renderDrafts(); revealSave(); setMsg('قريت الفاتورة بالذكاء الاصطناعي. راجع الإجمالي والتاريخ والفئة قبل ما تحفظ.');
   } catch { setMsg('معرفتش أقرا الصورة. جرّب تاني أو اكتب بإيدك.', true); }
   finally { $('mic').classList.remove('busy'); }
 }
@@ -547,6 +548,7 @@ $('pc-state').textContent = getPC() ? 'الصوت الذكي شغال على ا�
 
 // export / import
 function download(name, mime, text) {
+  if (window.MasarefyAndroid && window.MasarefyAndroid.saveFile) { try { const ok = window.MasarefyAndroid.saveFile(name, mime, text); setMsg(ok ? 'اتحفظ الملف في مجلد التنزيلات: ' + name : 'معرفتش أحفظ الملف.', !ok); } catch { setMsg('معرفتش أحفظ الملف.', true); } return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: mime })); a.download = name;
   document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
 }
@@ -602,3 +604,5 @@ if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) $('in
   render();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
+
+if (window.MasarefyAndroid) { const s = document.getElementById('inst'); if (s) s.hidden = true; }
