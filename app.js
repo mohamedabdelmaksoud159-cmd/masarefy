@@ -461,12 +461,16 @@ async function understand(text) {
   try { await understand2(text); } finally { $('mic').classList.remove('busy'); }
 }
 async function understand2(text) {
+  const clip = window.__clip ? ' (تسجيل ' + window.__clip + ')' : ''; window.__clip = null;
+  const heard = ' سمعت: «' + String(text).trim().slice(0, 120) + '»' + clip;
   let d = await aiDrafts(text), how = 'ai';
-  if (!d) { d = parseText(text); how = 'local'; }
-  if (!d.length) { drafts = null; renderDrafts(); setMsg('مفهمتش مبلغ في الكلام ده. جرّب: مواصلات ٨٠ وأكل ١٢٠', true); return; }
+  if (!d) {
+    d = parseText(text); how = 'local';
+    if (!d.some(x => x.amount !== null)) { drafts = null; renderDrafts(); setMsg('مسمعتش مبلغ واضح.' + heard + ' قول تاني أو اكتب المبلغ.', true); return; }
+  }
   drafts = d; renderDrafts(); revealSave();
   const dr = how === 'ai' && d.dropped ? ' في ' + d.dropped + ' بند مفهمتوش، اكتبهم بإيدك.' : '';
-  setMsg(how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : (getPC() ? 'الفهم الذكي مردش، فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.' : 'فهمت بالطريقة العادية (الصوت الذكي مقفول: اكتب الرمز السري في «بياناتك»). راجع كل بند واضغط احفظ.'));
+  setMsg((how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : (getPC() ? 'الفهم الذكي مردش، فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.' : 'فهمت بالطريقة العادية (الصوت الذكي مقفول: اكتب الرمز السري في «بياناتك»). راجع كل بند واضغط احفظ.')) + heard);
 }
 
 // ---------- receipt photo ----------
@@ -518,13 +522,13 @@ async function cloudVoice() {
   const base = $('input').value ? $('input').value.trim() + ' ' : '';
   mrec.ondataavailable = e => { if (e.data && e.data.size) mchunks.push(e.data); };
   let actx = null, raf = 0;
-  mrec.onstart = () => { try { if (!matchMedia('(prefers-reduced-motion:reduce)').matches) { actx = new (window.AudioContext || window.webkitAudioContext)(); const an = actx.createAnalyser(); an.fftSize = 256; actx.createMediaStreamSource(mstream).connect(an); const buf = new Uint8Array(an.frequencyBinCount); const tick = () => { an.getByteFrequencyData(buf); let t = 0; for (const v of buf) t += v; $('mic').style.setProperty('--lvl', Math.min(1, t / buf.length / 90).toFixed(2)); raf = requestAnimationFrame(tick); }; tick(); } } catch {}
+  mrec.onstart = () => { window.__t0 = Date.now(); try { if (false) { actx = new (window.AudioContext || window.webkitAudioContext)(); const an = actx.createAnalyser(); an.fftSize = 256; actx.createMediaStreamSource(mstream).connect(an); const buf = new Uint8Array(an.frequencyBinCount); const tick = () => { an.getByteFrequencyData(buf); let t = 0; for (const v of buf) t += v; $('mic').style.setProperty('--lvl', Math.min(1, t / buf.length / 90).toFixed(2)); raf = requestAnimationFrame(tick); }; tick(); } } catch {}
     listening = true; $('mic').classList.add('rec'); $('miclbl').textContent = 'وقّف'; setMsg('بسمعك… اضغط وقّف لما تخلص.'); };
   mrec.onstop = async () => {
     cancelAnimationFrame(raf); try { actx && actx.close(); } catch {} $('mic').style.removeProperty('--lvl');
     listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم';
     mstream.getTracks().forEach(t => t.stop());
-    const blob = new Blob(mchunks, { type: mrec.mimeType || 'audio/webm' });
+    const blob = new Blob(mchunks, { type: mrec.mimeType || 'audio/webm' }); window.__clip = ((Date.now() - (window.__t0 || Date.now())) / 1000).toFixed(1) + ' ث، ' + Math.round(blob.size / 1024) + ' ك.ب';
     if (blob.size < 1000) { setMsg('مسمعتش حاجة. جرّب تاني.', true); return; }
     setMsg('بكتب اللي قلته…'); $('mic').classList.add('busy');
     try {
