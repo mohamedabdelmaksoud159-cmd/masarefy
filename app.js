@@ -1,6 +1,7 @@
 'use strict';
 // ---------- constants ----------
-const DEFAULT_CATS = ['أكل وشرب', 'مواصلات', 'فواتير ورصيد', 'صحة', 'ملابس', 'ترفيه', 'تعليم', 'تانية'];
+const DEFAULT_CATS = ['أكل وشرب', 'مواصلات', 'فواتير ورصيد', 'صحة', 'ملابس', 'ترفيه', 'تعليم', 'تانية', 'سفر', 'بقالة', 'البيت', 'هدايا'];
+const OTHER = 7;
 const INC_CATS = ['مرتب', 'هدية', 'دخل تاني'];
 const ACCTS = ['كاش', 'بنك', 'محفظة'];
 const KEYWORDS = [
@@ -11,6 +12,11 @@ const KEYWORDS = [
   ['هدوم','ملابس','جزمه','حذاء','قميص','بنطلون','تيشرت'],
   ['سينما','خروجه','لعبه','العاب','كافيه','فيلم','رحله','نتفلكس'],
   ['كورس','كتاب','تعليم','دراسه','مدرسه','جامعه'],
+  [],
+  ['سفر','طيران','طياره','فندق','حجز','مطار','شاليه'],
+  ['هايبر','كارفور','مشتريات','خضروات','سبينس'],
+  ['اثاث','صيانه','سباك','كهربائي','منزل','مطبخ'],
+  ['هدايا','عزومه','فرح','ميلاد'],
 ];
 const INCOME_WORDS = ['قبضت','قبض','مرتب','راتب','استلمت','دخل','جالي','اتحوللي','حولولي','هديه','عيديه','مكافاه','ربح','ايراد'];
 const INC_SALARY = ['مرتب','راتب'], INC_GIFT = ['هديه','عيديه','مكافاه'];
@@ -65,7 +71,7 @@ function parseSegment(tokens, daysAgo) {
   const noteTokens = tokens.filter(t => { const n = norm(t); return !isNum(t) && !STOP.has(n) && !STOP.has(n.replace(/^و(?=.{3,})/, '')); });
   const rest = norm(noteTokens.join(' ')), all = norm(tokens.join(' '));
   const inc = INCOME_WORDS.some(k => all.split(/\s+/).some(w => w === k || w === 'ال' + k));
-  let cat = DEFAULT_CATS.length - 1;
+  let cat = OTHER;
   if (inc) cat = INC_GIFT.some(k => all.includes(k)) ? 1 : INC_SALARY.some(k => all.includes(k)) ? 0 : 2;
   else outer: for (let i = 0; i < KEYWORDS.length; i++) for (const k of KEYWORDS[i]) if (rest.includes(k)) { cat = i; break outer; }
   let acct = 0;
@@ -138,7 +144,7 @@ function plabel(period, from, to) {
   if (period === 'week') return fmtDate(from, { day: 'numeric', month: 'short' }) + ' إلى ' + fmtDate(to - 1, { day: 'numeric', month: 'short' });
   return fmtDate(from, { month: 'long', year: 'numeric' });
 }
-const CAT_IC = ['M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-3 5-3 8h3v10','M5 4h14a1 1 0 0 1 1 1v11H4V5a1 1 0 0 1 1-1zM4 11h16M7 20v-4M17 20v-4','M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2','M9 3h6v6h6v6h-6v6H9v-6H3V9h6z','M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z','M3 5h18v14H3zM10 9l5 3-5 3z','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM6 19h13','M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12h.01M12 12h.01M16 12h.01'], CAT_CO = ['#c85c3b','#4a5a3a','#c9a03c','#2e2824','#8b6b4e','#b0405a','#3f7a8a','#7a6a8f'];
+const CAT_IC = ['M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-3 5-3 8h3v10','M5 4h14a1 1 0 0 1 1 1v11H4V5a1 1 0 0 1 1-1zM4 11h16M7 20v-4M17 20v-4','M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2','M9 3h6v6h6v6h-6v6H9v-6H3V9h6z','M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z','M3 5h18v14H3zM10 9l5 3-5 3z','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM6 19h13','M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12h.01M12 12h.01M16 12h.01','M21 3L3 10l7 3 3 7zM10 13l11-10','M3 4h2l2.5 11h10L20 7H6M9 20h.01M17 20h.01','M3 11l9-8 9 8M5 10v10h14V10M10 20v-6h4v6','M4 9h16v4H4zM12 9v11M5 13v7h14v-7M12 9c-3 0-4-4-1-4 2 0 1 4 1 4zM12 9c3 0 4-4 1-4-2 0-1 4-1 4z'], CAT_CO = ['#c85c3b','#4a5a3a','#c9a03c','#2e2824','#8b6b4e','#b0405a','#3f7a8a','#7a6a8f','#2f7fb8','#7a9a2e','#a0643a','#c2578a'];
 const EXTRA_CO = ['#2f8f7a','#9b5de5','#d97706','#2563a8','#c2578a','#6b8e23'];
 const INC_IC = ['M3 8h18v12H3zM9 8V5h6v3M3 13h18','M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-3 0-5-4-2-5 2-.5 2 3 2 5zM12 9c3 0 5-4 2-5-2-.5-2 3-2 5z','M12 5v14M5 12h14'], INC_CO = ['#3f7a4a','#5a9a5f','#2f6b3a'];
 const TAG = 'M3 12V4h8l10 10-8 8zM7.5 7.5h.01';
@@ -341,7 +347,7 @@ function renderDrafts() {
   box.hidden = false;
   drafts.forEach(d => {
     const row = el('div', 'draft'); row.style.setProperty('--c', catCo(d.cat, d.type === 'inc')); const top = el('div', 'top'); top.appendChild(icon(d.cat, d.type === 'inc')); const name = el('span', '', d.note || 'من غير وصف');
-    const val = el('span', '', ''); const upd = () => { val.textContent = d.amount === null ? 'مفيش مبلغ' : (d.type === 'inc' ? '+ ' : '') + egp(d.amount); }; upd(); top.append(name, val);
+    const val = el('span', '', ''); const upd = () => { val.textContent = d.amount === null ? 'مفيش مبلغ' : (d.type === 'inc' ? '+ ' : '') + egp(d.amount); }; upd(); if (d.ai) { const b = el('span', 'aibadge', d.receipt ? 'AI · فاتورة' : 'AI'); top.append(b); } top.append(name, val);
     const amt = el('input'); amt.type = 'number'; amt.inputMode = 'decimal'; amt.min = '0'; amt.step = 'any'; amt.placeholder = 'المبلغ'; amt.setAttribute('aria-label', 'المبلغ');
     if (d.amount !== null) amt.value = d.amount;
     amt.oninput = () => { const v = parseFloat(amt.value); d.amount = isFinite(v) && v > 0 && v < MAX_AMOUNT ? v : null; upd(); $('save').disabled = !drafts.some(x => x.amount !== null); };
@@ -354,7 +360,7 @@ function renderDrafts() {
     if (d.date === undefined) d.date = null;
     const grid = el('div', 'grid'); grid.append(type, cat, acct, date);
     row.append(top, amt, grid);
-    if (d.unsure && d.unsure.length) row.appendChild(el('p', 'hint', 'مش متأكد من ' + d.unsure.map(u => ({ category: 'الفئة', date: 'التاريخ', account: 'الحساب' }[u] || u)).join(' و') + '. اتحط الافتراضي، راجعه قبل ما تحفظ.'));
+    if (d.unsure && d.unsure.length) row.appendChild(el('p', 'hint', 'مش متأكد من ' + d.unsure.map(u => ({ category: 'الفئة', date: 'التاريخ', account: 'الحساب', total: 'الإجمالي', total_check: 'الإجمالي', currency: 'العملة' }[u] || u)).join(' و') + '. اتحط الافتراضي، راجعه قبل ما تحفظ.'));
     if (d.assumed) row.appendChild(el('p', 'hint', 'التاريخ اتاخد من «امبارح» اللي قبله في الكلام. راجعه لو غلط.'));
     box.appendChild(row);
   });
@@ -433,7 +439,7 @@ async function aiDrafts(text) {
       if (!(da >= 0 && da <= 60) && !unsure.includes('date')) unsure.push('date');
       if (cat < 0 && !unsure.includes('category')) unsure.push('category');
       if (acct < 0 && !unsure.includes('account')) unsure.push('account');
-      out.push({ amount, cat: cat >= 0 ? cat : (inc ? 2 : settings.cats.length - 1), type: inc ? 'inc' : 'exp', acct: acct >= 0 ? acct : 0, daysAgo: da >= 0 && da <= 60 ? da : 0, note: String(it.note || '').slice(0, 60), ai: true, unsure });
+      out.push({ amount, cat: cat >= 0 ? cat : (inc ? 2 : OTHER), type: inc ? 'inc' : 'exp', acct: acct >= 0 ? acct : 0, daysAgo: da >= 0 && da <= 60 ? da : 0, note: String(it.note || '').slice(0, 60), ai: true, unsure });
     }
     return out.length ? out : null;
   } catch { return null; }
@@ -450,6 +456,36 @@ async function understand2(text) {
   const dr = how === 'ai' && d.dropped ? ' في ' + d.dropped + ' بند مفهمتوش، اكتبهم بإيدك.' : '';
   setMsg(how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : 'فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.');
 }
+
+// ---------- receipt photo ----------
+const AI_RCPT = AI_URL.replace('/stt', '/receipt');
+function shrink(file) {
+  return new Promise((ok, no) => {
+    const url = URL.createObjectURL(file), im = new Image();
+    im.onload = () => { const k = Math.min(1, 1280 / Math.max(im.width, im.height)); const c = document.createElement('canvas'); c.width = Math.round(im.width * k); c.height = Math.round(im.height * k); c.getContext('2d').drawImage(im, 0, 0, c.width, c.height); URL.revokeObjectURL(url); ok(c.toDataURL('image/jpeg', 0.82)); };
+    im.onerror = () => { URL.revokeObjectURL(url); no(new Error('img')); }; im.src = url;
+  });
+}
+async function receiptFlow(file) {
+  const pc = getPC();
+  if (!pc) { setMsg('قراءة الفاتورة محتاجة كلمة السر. حطها في الإعدادات الأول.', true); return; }
+  setMsg('بقرا الفاتورة…'); $('mic').classList.add('busy');
+  try {
+    const image = await shrink(file);
+    const r = await fetch(AI_RCPT, { method: 'POST', headers: { 'X-Passcode': pc, 'Content-Type': 'application/json' }, body: JSON.stringify({ image, cats: settings.cats }) });
+    if (!r.ok) { setMsg(r.status === 401 || r.status === 403 ? 'كلمة السر غلط.' : r.status === 429 ? 'محاولات كتير. استنى شوية.' : 'معرفتش أقرا الفاتورة. اكتب المبلغ بإيدك.', true); return; }
+    const j = await r.json(); const flags = Array.isArray(j.flags) ? j.flags.slice() : [];
+    const total = Number(j.total); const ok = total > 0 && total < MAX_AMOUNT;
+    const cat = settings.cats.indexOf(j.category); if (cat < 0 && !flags.includes('category')) flags.push('category');
+    const da = j.daysAgo === null || j.daysAgo === undefined ? NaN : Math.round(Number(j.daysAgo)); if (!(da >= 0 && da <= 60) && !flags.includes('date')) flags.push('date');
+    if (!ok && !flags.includes('total')) flags.push('total');
+    drafts = [{ amount: ok ? total : null, cat: cat >= 0 ? cat : OTHER, type: 'exp', acct: 0, daysAgo: da >= 0 && da <= 60 ? da : 0, note: String(j.merchant || 'فاتورة').slice(0, 60), ai: true, unsure: flags, receipt: true }];
+    renderDrafts(); setMsg('قريت الفاتورة بالذكاء الاصطناعي. راجع الإجمالي والتاريخ والفئة قبل ما تحفظ.');
+  } catch { setMsg('معرفتش أقرا الصورة. جرّب تاني أو اكتب بإيدك.', true); }
+  finally { $('mic').classList.remove('busy'); }
+}
+$('rcpt').onclick = () => $('rfile').click();
+$('rfile').onchange = () => { const f = $('rfile').files[0]; $('rfile').value = ''; if (f) receiptFlow(f); };
 async function cloudVoice() {
   if (mrec && mrec.state === 'recording') { mrec.stop(); return; }
   try { mstream = await navigator.mediaDevices.getUserMedia({ audio: true }); }

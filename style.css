@@ -198,3 +198,6 @@ button.secondary,.file{background:#fff}
 .list li .ic,.draft .ic,.brow .ic{background:color-mix(in srgb,var(--c) 14%,#fff)}
 .big.empty{color:var(--ink2)}
 textarea:focus,input:focus,select:focus{outline:2px solid #c85c3b}
+
+#rcpt{display:block;margin:6px auto 10px;background:#fff;color:var(--ink,#2e2824);border:1.5px solid #e1d3c0;border-radius:999px;padding:10px 18px;font-weight:500}
+.aibadge{font-size:11px;background:#4a5a3a;color:#fff;border-radius:999px;padding:2px 8px;font-weight:500}
