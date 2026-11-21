@@ -20,16 +20,16 @@
 
   <!-- اليوم -->
   <div class="tab" id="tab-home">
-    <section aria-labelledby="h-add">
-      <h2 id="h-add">سجّل</h2>
-      <textarea id="input" rows="3" dir="rtl" lang="ar" placeholder="صرفت ٨٠ مواصلات و١٢٠ أكل. أو: قبضت ٥٠٠٠ مرتب" aria-label="المصروف"></textarea>
-      <div class="row">
-        <button id="mic" type="button" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg> <span id="miclbl">تكلّم</span></button>
-        <button id="parse" type="button" class="primary">افهم الكلام</button>
-      </div>
-      <p id="voice-note" class="muted"></p>
+    <section aria-labelledby="h-add" class="hero">
+      <h2 id="h-add" class="sr">سجّل</h2>
+      <button id="mic" type="button" aria-describedby="msg"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span id="miclbl">تكلّم</span></button>
+      <p id="msg" role="status" class="status">اضغط الميكروفون وقول صرفت إيه. هفهم وأجهّز لك البنود، وانت تراجع وتحفظ.</p>
       <div id="drafts" hidden></div>
-      <p id="msg" role="status" class="muted"></p>
+      <details id="typed"><summary>أو اكتب بدل ما تتكلم</summary>
+        <textarea id="input" rows="2" dir="rtl" lang="ar" placeholder="صرفت ٨٠ مواصلات و١٢٠ أكل. أو: قبضت ٥٠٠٠ مرتب" aria-label="المصروف"></textarea>
+        <div class="row"><button id="parse" type="button" class="primary">افهم الكلام</button></div>
+      </details>
+      <p id="voice-note" class="muted"></p>
     </section>
     <section>
       <h2>النهارده</h2>
@@ -43,6 +43,7 @@
     <h2>يوم بيوم</h2>
     <div class="nav"><button type="button" id="d-prev">‹ السابق</button><strong id="d-label"></strong><button type="button" id="d-next">التالي ›</button></div>
     <p id="d-total" class="big"></p>
+    <p id="d-read" class="readout" role="status">اضغط على يوم في الرسم عشان تشوف تفاصيله</p>
     <div id="d-chart" class="chart" role="img" aria-label="مصاريف كل يوم في الشهر"></div>
     <ul id="d-list" class="list days"></ul>
   </div>
@@ -61,7 +62,8 @@
       <div class="card"><span>دخل</span><b id="r-inc"></b></div>
       <div class="card"><span>الباقي</span><b id="r-net"></b></div>
     </div>
-    <h3>حسب الفئة</h3>
+    <div id="r-donut" class="donutwrap"></div>
+    <h3>حسب الفئة (اضغط على فئة تشوف تفاصيلها)</h3>
     <ul id="r-cats" class="list"></ul>
     <h3>أكتر حاجات صرفت عليها</h3>
     <ul id="r-top" class="list"></ul>

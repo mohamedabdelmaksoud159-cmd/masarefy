@@ -138,6 +138,14 @@ function plabel(period, from, to) {
   if (period === 'week') return fmtDate(from, { day: 'numeric', month: 'short' }) + ' إلى ' + fmtDate(to - 1, { day: 'numeric', month: 'short' });
   return fmtDate(from, { month: 'long', year: 'numeric' });
 }
+const CAT_IC = ['M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-3 5-3 8h3v10','M5 4h14a1 1 0 0 1 1 1v11H4V5a1 1 0 0 1 1-1zM4 11h16M7 20v-4M17 20v-4','M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2','M9 3h6v6h6v6h-6v6H9v-6H3V9h6z','M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z','M3 5h18v14H3zM10 9l5 3-5 3z','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM6 19h13','M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12h.01M12 12h.01M16 12h.01'], CAT_CO = ['#fb923c','#38bdf8','#a78bfa','#f87171','#f472b6','#facc15','#34d399','#94a3b8'];
+const EXTRA_CO = ['#2dd4bf','#c084fc','#fbbf24','#60a5fa','#f9a8d4','#a3e635'];
+const INC_IC = ['M3 8h18v12H3zM9 8V5h6v3M3 13h18','M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-3 0-5-4-2-5 2-.5 2 3 2 5zM12 9c3 0 5-4 2-5-2-.5-2 3-2 5z','M12 5v14M5 12h14'], INC_CO = ['#4ade80','#86efac','#22c55e'];
+const TAG = 'M3 12V4h8l10 10-8 8zM7.5 7.5h.01';
+const catIc = (i, inc) => inc ? INC_IC[i] || INC_IC[2] : (i < CAT_IC.length ? CAT_IC[i] : TAG);
+const NS = 'http://www.w3.org/2000/svg';
+function icon(i, inc) { const w = el('span', 'ic'); w.setAttribute('aria-hidden', 'true'); const v = document.createElementNS(NS, 'svg'); v.setAttribute('viewBox', '0 0 24 24'); v.setAttribute('width', '20'); v.setAttribute('height', '20'); v.setAttribute('fill', 'none'); v.setAttribute('stroke', 'currentColor'); v.setAttribute('stroke-width', '2'); v.setAttribute('stroke-linecap', 'round'); v.setAttribute('stroke-linejoin', 'round'); const pa = document.createElementNS(NS, 'path'); pa.setAttribute('d', catIc(i, inc)); v.appendChild(pa); w.appendChild(v); return w; }
+const catCo = (i, inc) => inc ? INC_CO[i] || '#4ade80' : (i < CAT_CO.length ? CAT_CO[i] : EXTRA_CO[(i - CAT_CO.length) % EXTRA_CO.length]);
 const isInc = e => e.type === 'inc';
 const sum = l => l.reduce((s, e) => s + e.amount, 0);
 const expOf = l => l.filter(e => !isInc(e)), incOf = l => l.filter(isInc);
@@ -150,16 +158,16 @@ const ymd = t => { const d = new Date(t); return `${d.getFullYear()}-${pad(d.get
 // ---------- UI helpers ----------
 const $ = id => document.getElementById(id);
 let entries = [], drafts = null, armed = null, persisted = null, tab = 'home';
-let dOffset = 0, rPeriod = 'month', rOffset = 0, openDay = null;
+let selCat = null, dOffset = 0, rPeriod = 'month', rOffset = 0, openDay = null;
 
-function setMsg(t, bad) { $('msg').textContent = t; $('msg').className = 'muted' + (bad ? ' danger' : ''); }
+function setMsg(t, bad) { $('msg').textContent = t; $('msg').className = 'status' + (bad ? ' danger' : ''); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; }
 function li(name, detail, value, extra) {
   const e = el('li'); const l = el('div'); l.appendChild(el('div', 'n', name));
   if (detail) l.appendChild(el('div', 'd', detail));
   e.appendChild(l); e.appendChild(el('div', 'v', value)); if (extra) e.appendChild(extra); return e;
 }
-function bar(frac, over) { const b = el('div', 'bar' + (over ? ' over' : '')); const i = el('i'); i.style.width = Math.max(0, Math.min(1, frac)) * 100 + '%'; b.appendChild(i); return b; }
+function bar(frac, over, col) { const b = el('div', 'bar' + (over ? ' over' : '')); const i = el('i'); if (col && !over) i.style.background = col; i.style.width = Math.max(0, Math.min(1, frac)) * 100 + '%'; b.appendChild(i); return b; }
 function entryRow(e) {
   const b = el('button', 'x', armed === e.id ? 'تأكيد المسح' : 'امسح'); b.type = 'button';
   b.onclick = async () => {
@@ -172,6 +180,8 @@ function entryRow(e) {
   const when = new Date(e.ts).toLocaleString('ar-EG', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
   const row = li(e.note || catName(e), catName(e) + ' · ' + ACCTS[e.acct || 0] + ' · ' + when, sign + egp(e.amount), b);
   if (isInc(e)) row.classList.add('inc');
+  row.classList.add('ent'); row.style.setProperty('--c', catCo(e.cat, isInc(e)));
+  row.prepend(icon(e.cat, isInc(e)));
   return row;
 }
 function budgetStatus(now = Date.now()) {
@@ -194,8 +204,21 @@ function renderDays(now) {
   const days = new Date(new Date(f).getFullYear(), new Date(f).getMonth() + 1, 0).getDate();
   const per = []; for (let i = 1; i <= days; i++) per.push(0);
   expOf(m).forEach(e => { per[new Date(e.ts).getDate() - 1] += e.amount; });
+  const catPer = per.map(() => new Map()); expOf(m).forEach(e => { const mp = catPer[new Date(e.ts).getDate() - 1]; mp.set(e.cat, (mp.get(e.cat) || 0) + e.amount); });
   const max = Math.max(...per, 1); const ch = $('d-chart'); ch.textContent = '';
-  per.forEach((v, i) => { const c = el('div', 'col'); const b = el('i'); b.style.height = (v / max * 100) + '%'; if (v === 0) b.className = 'zero'; c.title = (i + 1) + ': ' + egp(v); c.appendChild(b); ch.appendChild(c); });
+  const fd = new Date(f);
+  per.forEach((v, i) => {
+    const c = el('button', 'col'); c.type = 'button'; const b = el('i'); b.style.height = (v / max * 100) + '%';
+    const top = [...catPer[i].entries()].sort((a, b) => b[1] - a[1])[0];
+    if (v === 0) b.className = 'zero'; else b.style.background = catCo(top[0]);
+    const k = dayKey(new Date(fd.getFullYear(), fd.getMonth(), i + 1, 12).getTime());
+    c.setAttribute('aria-label', (i + 1).toLocaleString('ar-EG') + ': ' + egp(v) + (top ? '، أكتر فئة ' + (settings.cats[top[0]] || '') : ''));
+    if (openDay === k) c.classList.add('sel');
+    c.onclick = () => { openDay = openDay === k ? null : k; render(); const t = document.querySelector('.dayitem.open'); if (t) t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'center' }); };
+    c.appendChild(b); ch.appendChild(c);
+  });
+  const sd = openDay && per.findIndex((_, i) => dayKey(new Date(fd.getFullYear(), fd.getMonth(), i + 1, 12).getTime()) === openDay);
+  $('d-read').textContent = openDay && sd >= 0 ? fmtDate(new Date(fd.getFullYear(), fd.getMonth(), sd + 1, 12).getTime(), { weekday: 'long', day: 'numeric', month: 'long' }) + ': ' + egp(per[sd]) + (catPer[sd].size ? ' (' + [...catPer[sd].entries()].sort((a, b) => b[1] - a[1]).map(([c, v]) => (settings.cats[c] || '') + ' ' + egp(v)).join('، ') + ')' : '') : 'اضغط على يوم في الرسم عشان تشوف تفاصيله. لون العمود = أكتر فئة صرفت عليها.';
   const ul = $('d-list'); ul.textContent = '';
   const byDay = new Map(); m.forEach(e => { const k = dayKey(e.ts); if (!byDay.has(k)) byDay.set(k, []); byDay.get(k).push(e); });
   [...byDay.entries()].sort((a, b) => b[0] - a[0]).forEach(([k, list]) => {
@@ -205,7 +228,7 @@ function renderDays(now) {
     head.appendChild(el('span', 'v', egp(x) + (y ? ' · +' + egp(y) : '')));
     head.setAttribute('aria-expanded', openDay === k ? 'true' : 'false');
     head.onclick = () => { openDay = openDay === k ? null : k; render(); };
-    const item = el('li', 'dayitem'); item.appendChild(head);
+    const item = el('li', 'dayitem' + (openDay === k ? ' open' : '')); item.appendChild(head);
     if (openDay === k) { const inner = el('ul', 'list'); list.sort((a, b) => b.ts - a.ts).forEach(e => inner.appendChild(entryRow(e))); item.appendChild(inner); }
     ul.appendChild(item);
   });
@@ -216,12 +239,25 @@ function renderReports(now) {
   $('r-exp').textContent = egp(sum(ex)); $('r-inc').textContent = egp(sum(inn)); $('r-net').textContent = egp(sum(inn) - sum(ex));
   document.querySelectorAll('#tab-rep .seg button').forEach(b => b.classList.toggle('on', b.dataset.p === rPeriod));
   const cats = $('r-cats'); cats.textContent = ''; const total = sum(ex);
-  settings.cats.map((c, i) => ({ c, v: sum(ex.filter(e => e.cat === i)) })).filter(x => x.v > 0).sort((a, b) => b.v - a.v).forEach(x => {
-    const row = li(x.c, Math.round(x.v / total * 100).toLocaleString('ar-EG') + '٪ من المصروفات', egp(x.v)); row.classList.add('withbar'); row.appendChild(bar(x.v / total)); cats.appendChild(row);
+  const cl = settings.cats.map((c, i) => ({ c, i, v: sum(ex.filter(e => e.cat === i)) })).filter(x => x.v > 0).sort((a, b) => b.v - a.v);
+  if (selCat !== null && !cl.some(x => x.i === selCat)) selCat = null;
+  cl.forEach(x => {
+    const row = li(x.c, Math.round(x.v / total * 100).toLocaleString('ar-EG') + '٪ من المصروفات', egp(x.v)); row.classList.add('withbar', 'tap', 'ent'); row.style.setProperty('--c', catCo(x.i)); row.prepend(icon(x.i));
+    row.appendChild(bar(x.v / total, false, catCo(x.i)));
+    row.tabIndex = 0; row.setAttribute('role', 'button'); row.setAttribute('aria-pressed', selCat === x.i ? 'true' : 'false'); if (selCat === x.i) row.classList.add('sel');
+    const go = () => { selCat = selCat === x.i ? null : x.i; render(); }; row.onclick = go; row.onkeydown = ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); go(); } };
+    cats.appendChild(row);
   });
+  const dn = $('r-donut'); dn.textContent = '';
+  if (cl.length) {
+    let acc = 0; const stops = cl.map(x => { const a = acc / total * 100; acc += x.v; return catCo(x.i) + ' ' + a + '% ' + (acc / total * 100) + '%'; });
+    const ring = el('div', 'donut'); ring.style.background = 'conic-gradient(' + stops.join(',') + ')'; ring.setAttribute('role', 'img'); ring.setAttribute('aria-label', 'توزيع المصروفات على الفئات');
+    const mid = el('div', 'mid'); const sel = cl.find(x => x.i === selCat);
+    mid.appendChild(el('span', '', sel ? sel.c : 'المصروفات')); mid.appendChild(el('b', '', egp(sel ? sel.v : total))); ring.appendChild(mid); dn.appendChild(ring);
+  }
   if (!cats.children.length) cats.appendChild(li('مفيش مصروفات في الفترة دي', '', ''));
   const top = $('r-top'); top.textContent = ''; const g = new Map();
-  ex.forEach(e => { const k = norm(e.note || '').trim() || '(من غير وصف)'; const o = g.get(k) || { name: e.note || catName(e), v: 0, n: 0 }; o.v += e.amount; o.n++; g.set(k, o); });
+  (selCat === null ? ex : ex.filter(e => e.cat === selCat)).forEach(e => { const k = norm(e.note || '').trim() || '(من غير وصف)'; const o = g.get(k) || { name: e.note || catName(e), v: 0, n: 0 }; o.v += e.amount; o.n++; g.set(k, o); });
   [...g.values()].sort((a, b) => b.v - a.v).slice(0, 5).forEach(o => top.appendChild(li(o.name, o.n.toLocaleString('ar-EG') + ' مرة', egp(o.v))));
   if (!top.children.length) top.appendChild(li('لسه مفيش', '', ''));
   const ac = $('r-accts'); ac.textContent = '';
@@ -238,12 +274,12 @@ function renderBudget() {
   const st = new Map(budgetStatus().map(s => [s.i, s])); const ul = $('b-list'); ul.textContent = '';
   settings.cats.forEach((c, i) => {
     const s = st.get(i); const row = el('li', 'withbar'); const top = el('div', 'brow');
-    top.appendChild(el('span', 'n', c));
+    top.appendChild(icon(i)); top.appendChild(el('span', 'n', c)); row.style.setProperty('--c', catCo(i)); row.classList.add('ent');
     const inp = el('input'); inp.type = 'number'; inp.inputMode = 'decimal'; inp.min = '0'; inp.step = 'any'; inp.placeholder = 'حد شهري'; inp.setAttribute('aria-label', 'الحد الشهري لـ ' + c);
     if (settings.budgets[i]) inp.value = settings.budgets[i];
     inp.onchange = () => { const v = parseFloat(inp.value); if (isFinite(v) && v > 0 && v < MAX_AMOUNT) settings.budgets[i] = v; else delete settings.budgets[i]; saveSettings(); render(); };
     top.appendChild(inp); row.appendChild(top);
-    if (s) { row.appendChild(bar(s.frac, s.frac > 1)); row.appendChild(el('div', 'd' + (s.frac > 1 ? ' danger' : ''), `صرفت ${egp(s.spent)} من ${egp(s.lim)} (${Math.round(s.frac * 100).toLocaleString('ar-EG')}٪)`)); }
+    if (s) { row.appendChild(bar(s.frac, s.frac > 1, catCo(i))); row.appendChild(el('div', 'd' + (s.frac > 1 ? ' danger' : ''), `${s.frac > 1 ? 'تحذير: ' : ''}صرفت ${egp(s.spent)} من ${egp(s.lim)} (${Math.round(s.frac * 100).toLocaleString('ar-EG')}٪)`)); }
     ul.appendChild(row);
   });
   const gl = $('g-list'); gl.textContent = '';
@@ -301,14 +337,14 @@ function renderDrafts() {
   if (!drafts) { box.hidden = true; return; }
   box.hidden = false;
   drafts.forEach(d => {
-    const row = el('div', 'draft'); const top = el('div', 'top'); const name = el('span', '', d.note || 'من غير وصف');
+    const row = el('div', 'draft'); row.style.setProperty('--c', catCo(d.cat, d.type === 'inc')); const top = el('div', 'top'); top.appendChild(icon(d.cat, d.type === 'inc')); const name = el('span', '', d.note || 'من غير وصف');
     const val = el('span', '', ''); const upd = () => { val.textContent = d.amount === null ? 'مفيش مبلغ' : (d.type === 'inc' ? '+ ' : '') + egp(d.amount); }; upd(); top.append(name, val);
     const amt = el('input'); amt.type = 'number'; amt.inputMode = 'decimal'; amt.min = '0'; amt.step = 'any'; amt.placeholder = 'المبلغ'; amt.setAttribute('aria-label', 'المبلغ');
     if (d.amount !== null) amt.value = d.amount;
     amt.oninput = () => { const v = parseFloat(amt.value); d.amount = isFinite(v) && v > 0 && v < MAX_AMOUNT ? v : null; upd(); $('save').disabled = !drafts.some(x => x.amount !== null); };
     const type = selectOf('النوع', ['مصروف', 'دخل'], d.type === 'inc' ? 1 : 0, v => { d.type = v ? 'inc' : 'exp'; d.cat = v ? 2 : Math.min(d.cat, settings.cats.length - 1); upd(); renderDrafts(); });
     const cats = d.type === 'inc' ? INC_CATS : settings.cats;
-    const cat = selectOf('الفئة', cats, Math.min(d.cat, cats.length - 1), v => { d.cat = v; });
+    const cat = selectOf('الفئة', cats, Math.min(d.cat, cats.length - 1), v => { d.cat = v; row.style.setProperty('--c', catCo(v, d.type === 'inc')); });
     const acct = selectOf('الحساب', ACCTS, d.acct, v => { d.acct = v; });
     const date = el('input'); date.type = 'date'; date.value = ymd(d.date || Date.now() - d.daysAgo * 86400000); date.max = ymd(Date.now()); date.setAttribute('aria-label', 'التاريخ');
     date.onchange = () => { const p = date.value.split('-').map(Number); d.date = p.length === 3 && p[0] ? new Date(p[0], p[1] - 1, p[2], 12).getTime() : null; };
@@ -342,12 +378,12 @@ $('parse').onclick = () => {
   drafts = d; setMsg(''); renderDrafts();
 };
 $('input').oninput = () => { if (drafts) { drafts = null; renderDrafts(); } };
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; armed = null; render(); window.scrollTo(0, 0); });
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.t; armed = null; selCat = null; render(); window.scrollTo(0, 0); });
 $('d-prev').onclick = () => { dOffset--; openDay = null; render(); };
 $('d-next').onclick = () => { if (dOffset < 0) { dOffset++; openDay = null; render(); } };
-document.querySelectorAll('#tab-rep .seg button').forEach(b => b.onclick = () => { rPeriod = b.dataset.p; rOffset = 0; render(); });
-$('r-prev').onclick = () => { rOffset--; render(); };
-$('r-next').onclick = () => { if (rOffset < 0) { rOffset++; render(); } };
+document.querySelectorAll('#tab-rep .seg button').forEach(b => b.onclick = () => { rPeriod = b.dataset.p; rOffset = 0; selCat = null; render(); });
+$('r-prev').onclick = () => { selCat = null; rOffset--; render(); };
+$('r-next').onclick = () => { if (rOffset < 0) { selCat = null; rOffset++; render(); } };
 $('g-add').onclick = () => {
   const n = $('g-name').value.trim().slice(0, 40), v = parseFloat($('g-target').value);
   if (!n || !(v > 0 && v < MAX_AMOUNT) || settings.goals.length >= 30) return;
@@ -374,7 +410,7 @@ function srStart() {
   rec.onstart = () => { listening = true; $('mic').classList.add('rec'); $('miclbl').textContent = 'وقّف'; setMsg('بسمعك…'); };
   rec.onresult = ev => { let t = ''; for (const r of ev.results) t += r[0].transcript; $('input').value = base + t; };
   rec.onerror = ev => { const m = { 'not-allowed': 'المتصفح مش مدّي إذن الميكروفون.', 'service-not-allowed': 'خدمة الصوت مش متاحة هنا.', 'no-speech': 'مسمعتش حاجة.', 'network': 'خدمة الصوت محتاجة إنترنت.', 'audio-capture': 'مفيش ميكروفون شغال.' }; setMsg(m[ev.error] || 'الصوت فشل (' + ev.error + ').', true); };
-  rec.onend = () => { listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم'; if ($('input').value.trim()) { if ($('msg').textContent === 'بسمعك…') setMsg('اتكتب. راجع النص واضغط افهم.'); } };
+  rec.onend = () => { listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم'; if ($('input').value.trim() && $('msg').textContent === 'بسمعك…') { $('typed').open = true; $('parse').click(); } };
   try { rec.start(); } catch { setMsg('معرفتش أشغّل الميكروفون.', true); }
 }
 const AI_PARSE = AI_URL.replace('/stt', '/parse');
@@ -400,7 +436,10 @@ async function aiDrafts(text) {
   } catch { return null; }
 }
 async function understand(text) {
-  setMsg('بفهم الكلام…');
+  setMsg('بفهم الكلام…'); $('mic').classList.add('busy');
+  try { await understand2(text); } finally { $('mic').classList.remove('busy'); }
+}
+async function understand2(text) {
   let d = await aiDrafts(text), how = 'ai';
   if (!d) { d = parseText(text); how = 'local'; }
   if (!d.length) { drafts = null; renderDrafts(); setMsg('مفهمتش مبلغ في الكلام ده. جرّب: مواصلات ٨٠ وأكل ١٢٠', true); return; }
@@ -416,21 +455,25 @@ async function cloudVoice() {
   mrec = new MediaRecorder(mstream);
   const base = $('input').value ? $('input').value.trim() + ' ' : '';
   mrec.ondataavailable = e => { if (e.data && e.data.size) mchunks.push(e.data); };
-  mrec.onstart = () => { listening = true; $('mic').classList.add('rec'); $('miclbl').textContent = 'وقّف'; setMsg('بسمعك… اضغط وقّف لما تخلص.'); };
+  let actx = null, raf = 0;
+  mrec.onstart = () => { try { if (!matchMedia('(prefers-reduced-motion:reduce)').matches) { actx = new (window.AudioContext || window.webkitAudioContext)(); const an = actx.createAnalyser(); an.fftSize = 256; actx.createMediaStreamSource(mstream).connect(an); const buf = new Uint8Array(an.frequencyBinCount); const tick = () => { an.getByteFrequencyData(buf); let t = 0; for (const v of buf) t += v; $('mic').style.setProperty('--lvl', Math.min(1, t / buf.length / 90).toFixed(2)); raf = requestAnimationFrame(tick); }; tick(); } } catch {}
+    listening = true; $('mic').classList.add('rec'); $('miclbl').textContent = 'وقّف'; setMsg('بسمعك… اضغط وقّف لما تخلص.'); };
   mrec.onstop = async () => {
+    cancelAnimationFrame(raf); try { actx && actx.close(); } catch {} $('mic').style.removeProperty('--lvl');
     listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم';
     mstream.getTracks().forEach(t => t.stop());
     const blob = new Blob(mchunks, { type: mrec.mimeType || 'audio/webm' });
     if (blob.size < 1000) { setMsg('مسمعتش حاجة. جرّب تاني.', true); return; }
-    setMsg('بكتب اللي قلته…');
+    setMsg('بكتب اللي قلته…'); $('mic').classList.add('busy');
     try {
       const r = await fetch(AI_URL, { method: 'POST', headers: { 'X-Passcode': getPC(), 'Content-Type': blob.type }, body: blob });
       if (r.status === 401) { setMsg('الرمز السري غلط. صحّحه من «بياناتك».', true); return; }
       if (!r.ok) { setMsg('الصوت السحابي مش متاح دلوقتي (' + r.status + '). اكتب أو جرّب تاني.', true); return; }
       const j = await r.json(); const t = (j.text || '').trim();
       if (!t) { setMsg('مسمعتش كلام واضح. جرّب تاني.', true); return; }
-      $('input').value = base + t; await understand($('input').value);
+      $('input').value = base + t; await understand($('input').value); return;
     } catch { setMsg('مفيش اتصال بخدمة الصوت. اكتب أو جرّب تاني.', true); }
+    $('mic').classList.remove('busy');
   };
   mrec.start();
 }
