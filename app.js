@@ -315,6 +315,7 @@ function renderDrafts() {
     if (d.date === undefined) d.date = null;
     const grid = el('div', 'grid'); grid.append(type, cat, acct, date);
     row.append(top, amt, grid);
+    if (d.unsure && d.unsure.length) row.appendChild(el('p', 'hint', 'مش متأكد من ' + d.unsure.map(u => ({ category: 'الفئة', date: 'التاريخ', account: 'الحساب' }[u] || u)).join(' و') + '. اتحط الافتراضي، راجعه قبل ما تحفظ.'));
     if (d.assumed) row.appendChild(el('p', 'hint', 'التاريخ اتاخد من «امبارح» اللي قبله في الكلام. راجعه لو غلط.'));
     box.appendChild(row);
   });
@@ -335,6 +336,7 @@ function renderDrafts() {
 
 // ---------- events ----------
 $('parse').onclick = () => {
+  if (getPC()) { understand($('input').value); return; }
   const d = parseText($('input').value);
   if (!d.length) { drafts = null; renderDrafts(); setMsg('مفهمتش مبلغ في الكلام ده. جرّب: مواصلات ٨٠ وأكل ١٢٠', true); return; }
   drafts = d; setMsg(''); renderDrafts();
@@ -375,6 +377,37 @@ function srStart() {
   rec.onend = () => { listening = false; $('mic').classList.remove('rec'); $('miclbl').textContent = 'تكلّم'; if ($('input').value.trim()) { if ($('msg').textContent === 'بسمعك…') setMsg('اتكتب. راجع النص واضغط افهم.'); } };
   try { rec.start(); } catch { setMsg('معرفتش أشغّل الميكروفون.', true); }
 }
+const AI_PARSE = AI_URL.replace('/stt', '/parse');
+async function aiDrafts(text) {
+  const pc = getPC(); if (!pc) return null;
+  try {
+    const r = await fetch(AI_PARSE, { method: 'POST', headers: { 'X-Passcode': pc, 'Content-Type': 'application/json' }, body: JSON.stringify({ text, cats: settings.cats }) });
+    if (!r.ok) return null;
+    const j = await r.json(); const out = []; out.dropped = j.dropped || 0;
+    for (const it of (j.items || [])) {
+      const inc = it.type === 'inc';
+      const cat = inc ? INC_CATS.indexOf(it.category) : settings.cats.indexOf(it.category);
+      const acct = ['cash', 'bank', 'wallet'].indexOf(it.account);
+      const unsure = Array.isArray(it.flags) ? it.flags.slice() : [];
+      const amount = Number(it.amount); if (!(amount > 0 && amount < MAX_AMOUNT)) { out.dropped++; continue; }
+      const da = it.daysAgo === null ? NaN : Math.round(Number(it.daysAgo));
+      if (!(da >= 0 && da <= 60) && !unsure.includes('date')) unsure.push('date');
+      if (cat < 0 && !unsure.includes('category')) unsure.push('category');
+      if (acct < 0 && !unsure.includes('account')) unsure.push('account');
+      out.push({ amount, cat: cat >= 0 ? cat : (inc ? 2 : settings.cats.length - 1), type: inc ? 'inc' : 'exp', acct: acct >= 0 ? acct : 0, daysAgo: da >= 0 && da <= 60 ? da : 0, note: String(it.note || '').slice(0, 60), ai: true, unsure });
+    }
+    return out.length ? out : null;
+  } catch { return null; }
+}
+async function understand(text) {
+  setMsg('بفهم الكلام…');
+  let d = await aiDrafts(text), how = 'ai';
+  if (!d) { d = parseText(text); how = 'local'; }
+  if (!d.length) { drafts = null; renderDrafts(); setMsg('مفهمتش مبلغ في الكلام ده. جرّب: مواصلات ٨٠ وأكل ١٢٠', true); return; }
+  drafts = d; renderDrafts();
+  const dr = how === 'ai' && d.dropped ? ' في ' + d.dropped + ' بند مفهمتوش، اكتبهم بإيدك.' : '';
+  setMsg(how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : 'فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.');
+}
 async function cloudVoice() {
   if (mrec && mrec.state === 'recording') { mrec.stop(); return; }
   try { mstream = await navigator.mediaDevices.getUserMedia({ audio: true }); }
@@ -396,7 +429,7 @@ async function cloudVoice() {
       if (!r.ok) { setMsg('الصوت السحابي مش متاح دلوقتي (' + r.status + '). اكتب أو جرّب تاني.', true); return; }
       const j = await r.json(); const t = (j.text || '').trim();
       if (!t) { setMsg('مسمعتش كلام واضح. جرّب تاني.', true); return; }
-      $('input').value = base + t; setMsg('اتكتب. راجع النص واضغط افهم.');
+      $('input').value = base + t; await understand($('input').value);
     } catch { setMsg('مفيش اتصال بخدمة الصوت. اكتب أو جرّب تاني.', true); }
   };
   mrec.start();
