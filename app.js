@@ -60,7 +60,9 @@ function norm(s) {
     .replace(/[٠-٩]/g, d => String(d.charCodeAt(0) - 0x0660)).replace(/[۰-۹]/g, d => String(d.charCodeAt(0) - 0x06f0))
     .replace(/٫/g, '.').toLowerCase();
 }
-const wordVal = t => { const n = norm(t); const w = n.replace(/^و/, '').replace(/^ال/, ''); return WORDS[n] ?? WORDS[w]; };
+const wordVal = t => { const n = norm(t); const w = n.replace(/^و/, '').replace(/^ال/, ''); const b = w.replace(/^ب(?=.{3,})/, ''); return WORDS[n] ?? WORDS[w] ?? WORDS[b]; };
+const FILLER = new Set(['انا','ركبت','اشتريت','اشتري','اخدت','جبت','عملت','رحت','حاجه','حاجة','كده','يعني','ده','دي','لسه','النهارده','كمان','بقي','بقى','تقريبا','حوالي']);
+const CATWORDS = new Set(['مواصلات','اكل','فواتير','فاتوره','رصيد']);
 const isNum = t => /\d/.test(norm(t)) || wordVal(t) !== undefined;
 function parseSegment(tokens, daysAgo) {
   if (!tokens.length) return null;
@@ -76,8 +78,11 @@ function parseSegment(tokens, daysAgo) {
   else outer: for (let i = 0; i < KEYWORDS.length; i++) for (const k of KEYWORDS[i]) if (rest.includes(k)) { cat = i; break outer; }
   let acct = 0;
   for (let a = 1; a < ACCT_WORDS.length; a++) if (ACCT_WORDS[a].some(k => all.includes(k))) { acct = a; break; }
-  if (amount === null && !noteTokens.length) return null;
-  return { amount, cat, type: inc ? 'inc' : 'exp', acct, daysAgo, note: noteTokens.join(' ').replace(/^و(?=.{3,})/, '').slice(0, 60) };
+  let clean = noteTokens.filter(t => !FILLER.has(norm(t)));
+  const noCat = clean.filter(t => !CATWORDS.has(norm(t)));
+  if (noCat.length) clean = noCat;
+  if (amount === null && !clean.length) return null;
+  return { amount, cat, type: inc ? 'inc' : 'exp', acct, daysAgo, note: clean.join(' ').replace(/^و(?=.{3,})/, '').slice(0, 60) };
 }
 function lineDaysAgo(toks) {
   const ns = toks.map(norm);
@@ -461,7 +466,7 @@ async function understand2(text) {
   if (!d.length) { drafts = null; renderDrafts(); setMsg('مفهمتش مبلغ في الكلام ده. جرّب: مواصلات ٨٠ وأكل ١٢٠', true); return; }
   drafts = d; renderDrafts(); revealSave();
   const dr = how === 'ai' && d.dropped ? ' في ' + d.dropped + ' بند مفهمتوش، اكتبهم بإيدك.' : '';
-  setMsg(how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : 'فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.');
+  setMsg(how === 'ai' ? 'فهمت. راجع كل بند واضغط احفظ.' + dr : (getPC() ? 'الفهم الذكي مردش، فهمت بالطريقة العادية. راجع كل بند واضغط احفظ.' : 'فهمت بالطريقة العادية (الصوت الذكي مقفول: اكتب الرمز السري في «بياناتك»). راجع كل بند واضغط احفظ.'));
 }
 
 // ---------- receipt photo ----------
