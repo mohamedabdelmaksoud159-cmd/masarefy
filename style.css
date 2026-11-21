@@ -30,3 +30,35 @@ footer{margin-top:32px}
 
 .big.empty{font-size:16px;font-weight:400;color:var(--ink2)}
 button svg{vertical-align:-3px;margin-inline-start:4px}
+
+main{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
+#tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:#fff;border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom);z-index:5}
+#tabs button{flex:1;border:0;border-radius:0;background:#fff;min-height:56px;padding:0 2px;font-size:13px;color:var(--ink2)}
+#tabs button.on{color:var(--teal);font-weight:700;box-shadow:inset 0 3px 0 var(--teal)}
+.alerts{background:var(--sand);border-radius:8px;padding:10px 12px;margin:12px 0 0;font-size:14px;font-weight:600}
+.cards{display:flex;gap:8px;margin:8px 0}.card{flex:1;border:1px solid var(--line);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.card span{font-size:12px;color:var(--ink2)}.card b{font-size:15px;overflow-wrap:anywhere}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.grid select,.grid input{margin-top:0}
+input,select{font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:6px;min-height:44px;color:var(--ink);background:#fff;min-width:0}
+.row input{flex:1}
+.bar{height:8px;background:var(--sand);border-radius:4px;overflow:hidden;margin-top:6px;width:100%}
+.bar i{display:block;height:100%;background:var(--teal)}.bar.over i{background:var(--red)}
+.list li.withbar{flex-wrap:wrap}.list li.withbar .bar{flex-basis:100%}
+.list li.inc .v{color:#2f7d5f}
+.brow{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%}.brow input{width:130px}
+#b-list li{flex-direction:column;align-items:stretch}
+.goal{border-top:1px solid var(--line);padding:10px 0}.goal .row{align-items:center}
+.chart{display:flex;align-items:flex-end;gap:2px;height:110px;margin:8px 0 16px;direction:rtl}
+.chart .col{flex:1;height:100%;display:flex;align-items:flex-end}
+.chart i{display:block;width:100%;background:var(--teal);border-radius:2px 2px 0 0;min-height:2px}.chart i.zero{background:var(--line)}
+.days{display:block}.days li.dayitem{display:block;padding:0}
+.dayhead{display:flex;justify-content:space-between;gap:8px;width:100%;border:0;border-top:1px solid var(--line);border-radius:0;background:#fff;text-align:start;min-height:52px;font-size:15px}
+.dayhead .n{font-weight:600}.dayhead .v{font-weight:600;color:var(--ink2);white-space:nowrap}
+.days li ul.list{padding-inline-start:12px}
+.catname{width:100%}
+.list .d.danger{color:var(--red)}
+.list li.withbar{row-gap:2px}.list li.withbar .bar{margin-top:2px}
+#b-list li{gap:4px}
+#home-sum.big,#d-total.big{font-size:20px}
+.big.empty{font-size:16px}

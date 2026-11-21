@@ -16,39 +16,73 @@
     <h1>مصاريفي</h1>
     <p id="today" class="today"></p>
   </header>
+  <p id="alerts" class="alerts" hidden></p>
 
-  <section aria-labelledby="h-add">
-    <h2 id="h-add">سجّل مصروف</h2>
-    <textarea id="input" rows="3" dir="rtl" lang="ar" placeholder="صرفت ٨٠ مواصلات و١٢٠ أكل" aria-label="المصروف"></textarea>
-    <div class="row">
-      <button id="mic" type="button" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg> <span id="miclbl">تكلّم</span></button>
-      <button id="parse" type="button" class="primary">افهم المصاريف</button>
-    </div>
-    <p id="voice-note" class="muted"></p>
-    <div id="drafts" hidden></div>
-    <p id="msg" role="status" class="muted"></p>
-  </section>
+  <!-- اليوم -->
+  <div class="tab" id="tab-home">
+    <section aria-labelledby="h-add">
+      <h2 id="h-add">سجّل</h2>
+      <textarea id="input" rows="3" dir="rtl" lang="ar" placeholder="صرفت ٨٠ مواصلات و١٢٠ أكل. أو: قبضت ٥٠٠٠ مرتب" aria-label="المصروف"></textarea>
+      <div class="row">
+        <button id="mic" type="button" class="secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg> <span id="miclbl">تكلّم</span></button>
+        <button id="parse" type="button" class="primary">افهم الكلام</button>
+      </div>
+      <p id="voice-note" class="muted"></p>
+      <div id="drafts" hidden></div>
+      <p id="msg" role="status" class="muted"></p>
+    </section>
+    <section>
+      <h2>النهارده</h2>
+      <p id="home-sum" class="big"></p>
+      <ul id="home-list" class="list"></ul>
+    </section>
+  </div>
 
-  <section aria-labelledby="h-tot">
-    <h2 id="h-tot">الإجمالي</h2>
+  <!-- الأيام -->
+  <div class="tab" id="tab-days" hidden>
+    <h2>يوم بيوم</h2>
+    <div class="nav"><button type="button" id="d-prev">‹ السابق</button><strong id="d-label"></strong><button type="button" id="d-next">التالي ›</button></div>
+    <p id="d-total" class="big"></p>
+    <div id="d-chart" class="chart" role="img" aria-label="مصاريف كل يوم في الشهر"></div>
+    <ul id="d-list" class="list days"></ul>
+  </div>
+
+  <!-- التقارير -->
+  <div class="tab" id="tab-rep" hidden>
+    <h2>التقارير</h2>
     <div class="seg" role="group" aria-label="الفترة">
-      <button type="button" data-p="day" class="on">اليوم</button>
+      <button type="button" data-p="day">اليوم</button>
       <button type="button" data-p="week">الأسبوع</button>
-      <button type="button" data-p="month">الشهر</button>
+      <button type="button" data-p="month" class="on">الشهر</button>
     </div>
-    <div class="nav">
-      <button type="button" id="prev" aria-label="الفترة السابقة">‹ السابق</button>
-      <strong id="plabel"></strong>
-      <button type="button" id="next" aria-label="الفترة التالية">التالي ›</button>
+    <div class="nav"><button type="button" id="r-prev">‹ السابق</button><strong id="r-label"></strong><button type="button" id="r-next">التالي ›</button></div>
+    <div class="cards">
+      <div class="card"><span>مصروفات</span><b id="r-exp"></b></div>
+      <div class="card"><span>دخل</span><b id="r-inc"></b></div>
+      <div class="card"><span>الباقي</span><b id="r-net"></b></div>
     </div>
-    <p id="total" class="big"></p>
-    <ul id="cats" class="list"></ul>
-    <h3>المصاريف</h3>
-    <ul id="entries" class="list"></ul>
-  </section>
+    <h3>حسب الفئة</h3>
+    <ul id="r-cats" class="list"></ul>
+    <h3>أكتر حاجات صرفت عليها</h3>
+    <ul id="r-top" class="list"></ul>
+    <h3>رصيد الحسابات (كل الفترات)</h3>
+    <ul id="r-accts" class="list"></ul>
+  </div>
 
-  <section aria-labelledby="h-data">
-    <h2 id="h-data">بياناتك</h2>
+  <!-- الميزانية -->
+  <div class="tab" id="tab-bud" hidden>
+    <h2>ميزانية الشهر</h2>
+    <p class="muted">حدد حد شهري لكل فئة. التنبيه بيظهر جوه التطبيق لما توصل ٨٠٪ أو تعدّي.</p>
+    <ul id="b-list" class="list"></ul>
+    <h2>أهداف الادخار</h2>
+    <div id="g-list"></div>
+    <div class="row"><input id="g-name" placeholder="اسم الهدف" aria-label="اسم الهدف"><input id="g-target" type="number" inputmode="decimal" min="1" placeholder="المبلغ المطلوب" aria-label="المبلغ المطلوب"></div>
+    <div class="row"><button id="g-add" type="button" class="primary">أضف هدف</button></div>
+  </div>
+
+  <!-- بياناتك -->
+  <div class="tab" id="tab-set" hidden>
+    <h2>بياناتك</h2>
     <p id="store" class="muted"></p>
     <div class="row">
       <button id="exp-json" type="button" class="secondary">نسخة احتياطية (JSON)</button>
@@ -56,14 +90,24 @@
     </div>
     <label class="file secondary">استرجاع نسخة<input id="imp" type="file" accept=".json,application/json"></label>
     <p id="backup" class="muted"></p>
-  </section>
-  <section id="inst" aria-labelledby="h-inst">
-    <h2 id="h-inst">ثبّت التطبيق على الموبايل</h2>
-    <button id="install" type="button" class="primary" hidden>ثبّت التطبيق</button>
-    <p id="inst-note" class="muted">لو الزرار مظهرش: من قايمة المتصفح (⋮) اختار «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</p>
-  </section>
-  <footer class="muted">الأرقام بالجنيه المصري. البيانات محفوظة على الجهاز ده بس.</footer>
+    <h2>الفئات</h2>
+    <ul id="c-list" class="list"></ul>
+    <div class="row"><input id="c-name" placeholder="فئة جديدة" aria-label="فئة جديدة" maxlength="20"><button id="c-add" type="button" class="secondary">أضف</button></div>
+    <section id="inst">
+      <h2>ثبّت التطبيق على الموبايل</h2>
+      <button id="install" type="button" class="primary" hidden>ثبّت التطبيق</button>
+      <p id="inst-note" class="muted">لو الزرار مظهرش: من قايمة المتصفح (⋮) اختار «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».</p>
+    </section>
+    <p class="muted">الأرقام بالجنيه المصري. البيانات محفوظة على الجهاز ده بس، ومفيش حساب بنك متوصل.</p>
+  </div>
 </main>
+<nav id="tabs" aria-label="الأقسام">
+  <button type="button" data-t="home" class="on">اليوم</button>
+  <button type="button" data-t="days">الأيام</button>
+  <button type="button" data-t="rep">تقارير</button>
+  <button type="button" data-t="bud">ميزانية</button>
+  <button type="button" data-t="set">بياناتك</button>
+</nav>
 <script src="app.js"></script>
 </body>
 </html>
