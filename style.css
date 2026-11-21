@@ -225,3 +225,4 @@ main{padding-bottom:calc(140px + env(safe-area-inset-bottom))}
 #tabs{gap:0}
 .aibadge{flex:none;align-self:center;width:auto}
 #inst[hidden]{display:none}
+.draft .top span:nth-child(2):not(.dn){flex:none}.draft .top .dn{flex:1}.draft .top .aibadge{white-space:nowrap}

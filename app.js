@@ -353,7 +353,7 @@ function renderDrafts() {
   if (!drafts) { box.hidden = true; return; }
   box.hidden = false;
   drafts.forEach(d => {
-    const row = el('div', 'draft'); row.style.setProperty('--c', catCo(d.cat, d.type === 'inc')); const top = el('div', 'top'); top.appendChild(icon(d.cat, d.type === 'inc')); const name = el('span', '', d.note || 'من غير وصف');
+    const row = el('div', 'draft'); row.style.setProperty('--c', catCo(d.cat, d.type === 'inc')); const top = el('div', 'top'); top.appendChild(icon(d.cat, d.type === 'inc')); const name = el('span', 'dn', d.note || 'من غير وصف');
     const val = el('span', '', ''); const upd = () => { val.textContent = d.amount === null ? 'مفيش مبلغ' : (d.type === 'inc' ? '+ ' : '') + egp(d.amount); }; upd(); if (d.ai) { const b = el('span', 'aibadge', d.receipt ? 'AI · فاتورة' : 'AI'); top.append(b); } top.append(name, val);
     const amt = el('input'); amt.type = 'number'; amt.inputMode = 'decimal'; amt.min = '0'; amt.step = 'any'; amt.placeholder = 'المبلغ'; amt.setAttribute('aria-label', 'المبلغ');
     if (d.amount !== null) amt.value = d.amount;
