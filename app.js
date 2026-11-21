@@ -138,9 +138,9 @@ function plabel(period, from, to) {
   if (period === 'week') return fmtDate(from, { day: 'numeric', month: 'short' }) + ' إلى ' + fmtDate(to - 1, { day: 'numeric', month: 'short' });
   return fmtDate(from, { month: 'long', year: 'numeric' });
 }
-const CAT_IC = ['M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-3 5-3 8h3v10','M5 4h14a1 1 0 0 1 1 1v11H4V5a1 1 0 0 1 1-1zM4 11h16M7 20v-4M17 20v-4','M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2','M9 3h6v6h6v6h-6v6H9v-6H3V9h6z','M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z','M3 5h18v14H3zM10 9l5 3-5 3z','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM6 19h13','M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12h.01M12 12h.01M16 12h.01'], CAT_CO = ['#fb923c','#38bdf8','#a78bfa','#f87171','#f472b6','#facc15','#34d399','#94a3b8'];
-const EXTRA_CO = ['#2dd4bf','#c084fc','#fbbf24','#60a5fa','#f9a8d4','#a3e635'];
-const INC_IC = ['M3 8h18v12H3zM9 8V5h6v3M3 13h18','M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-3 0-5-4-2-5 2-.5 2 3 2 5zM12 9c3 0 5-4 2-5-2-.5-2 3-2 5z','M12 5v14M5 12h14'], INC_CO = ['#4ade80','#86efac','#22c55e'];
+const CAT_IC = ['M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M17 3c-2 2-3 5-3 8h3v10','M5 4h14a1 1 0 0 1 1 1v11H4V5a1 1 0 0 1 1-1zM4 11h16M7 20v-4M17 20v-4','M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2','M9 3h6v6h6v6h-6v6H9v-6H3V9h6z','M8 3l-5 4 3 3 2-1v12h8V9l2 1 3-3-5-4a4 4 0 0 1-8 0z','M3 5h18v14H3zM10 9l5 3-5 3z','M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM6 19h13','M3 12a9 9 0 1 0 18 0a9 9 0 1 0-18 0M8 12h.01M12 12h.01M16 12h.01'], CAT_CO = ['#c85c3b','#4a5a3a','#c9a03c','#2e2824','#8b6b4e','#b0405a','#3f7a8a','#7a6a8f'];
+const EXTRA_CO = ['#2f8f7a','#9b5de5','#d97706','#2563a8','#c2578a','#6b8e23'];
+const INC_IC = ['M3 8h18v12H3zM9 8V5h6v3M3 13h18','M3 9h18v4H3zM5 13v8h14v-8M12 9v12M12 9c-3 0-5-4-2-5 2-.5 2 3 2 5zM12 9c3 0 5-4 2-5-2-.5-2 3-2 5z','M12 5v14M5 12h14'], INC_CO = ['#3f7a4a','#5a9a5f','#2f6b3a'];
 const TAG = 'M3 12V4h8l10 10-8 8zM7.5 7.5h.01';
 const catIc = (i, inc) => inc ? INC_IC[i] || INC_IC[2] : (i < CAT_IC.length ? CAT_IC[i] : TAG);
 const NS = 'http://www.w3.org/2000/svg';
@@ -238,6 +238,9 @@ function renderReports(now) {
   $('r-label').textContent = plabel(rPeriod, f, t); $('r-next').disabled = rOffset >= 0;
   $('r-exp').textContent = egp(sum(ex)); $('r-inc').textContent = egp(sum(inn)); $('r-net').textContent = egp(sum(inn) - sum(ex));
   document.querySelectorAll('#tab-rep .seg button').forEach(b => b.classList.toggle('on', b.dataset.p === rPeriod));
+  const [pf, pt] = range(rPeriod, rOffset - 1, now); const prev = sum(expOf(entries.filter(inRange(pf, pt)))); const cur = sum(ex); const nm = { day: 'اليوم اللي قبله', week: 'الأسبوع اللي فات', month: 'الشهر اللي فات' }[rPeriod];
+  $('r-cmp').textContent = !prev ? (cur ? 'مفيش مصروفات في ' + nm + ' للمقارنة.' : '') : cur === prev ? 'نفس مصروفات ' + nm + '.' : 'مصروفاتك ' + (cur > prev ? 'زادت ' : 'قلّت ') + egp(Math.abs(cur - prev)) + ' (' + Math.round(Math.abs(cur - prev) / prev * 100) + '%) عن ' + nm + '.';
+  $('r-cmp').hidden = !$('r-cmp').textContent;
   const cats = $('r-cats'); cats.textContent = ''; const total = sum(ex);
   const cl = settings.cats.map((c, i) => ({ c, i, v: sum(ex.filter(e => e.cat === i)) })).filter(x => x.v > 0).sort((a, b) => b.v - a.v);
   if (selCat !== null && !cl.some(x => x.i === selCat)) selCat = null;
@@ -364,7 +367,7 @@ function renderDrafts() {
       const e = { id: uid(), ts: Math.min(base + i, t + i), amount: x.amount, cat: x.cat, note: x.note };
       if (x.type === 'inc') e.type = 'inc'; if (x.acct) e.acct = x.acct; return e;
     });
-    try { await putMany(add); entries = entries.concat(add); drafts = null; $('input').value = ''; setMsg(`اتحفظ ${add.length.toLocaleString('ar-EG-u-nu-latn')} في الجهاز.`); renderDrafts(); render(); }
+    try { await putMany(add); entries = entries.concat(add); drafts = null; $('input').value = ''; setMsg(add.length > 1 ? 'تمام، اتسجّلوا ' + add.length + ' بنود. قول اللي بعده.' : 'تمام، اتسجّل. قول اللي بعده.'); renderDrafts(); render(); }
     catch { setMsg('الحفظ فشل ومفيش حاجة اتحفظت. جرّب تاني.', true); s.disabled = false; }
   };
   box.appendChild(s);
