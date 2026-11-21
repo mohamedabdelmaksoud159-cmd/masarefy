@@ -245,3 +245,10 @@ $('imp').onchange = async ev => {
   render();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
+
+// ---------- install ----------
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; $('install').hidden = false; });
+$('install').onclick = async () => { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch {} deferredInstall = null; $('install').hidden = true; };
+window.addEventListener('appinstalled', () => { $('install').hidden = true; $('inst-note').textContent = 'التطبيق اتثبّت. افتحه من الشاشة الرئيسية.'; });
+if (window.matchMedia && matchMedia('(display-mode: standalone)').matches) $('inst').hidden = true;
